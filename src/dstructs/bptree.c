@@ -1,5 +1,20 @@
 #include "bptree.h"
 
+#define BTREE_PAGE_SIZE     4096
+#define BTREE_MAX_KEY_SIZE  1000
+#define BTREE_MAX_VAL_SIZE  3000
+
+static void assert_page(BPtreeNode *node){
+    //assert node fits in a page
+}
+
+//| type | nkeys |  children  |   offsets  | key-values
+//|  2B  |   2B  | nkeys * 8B | nkeys * 2B | ...
+
+//key-value offset for item idx
+int offsetPos(BPtreeNode *node, int idx){
+}
+
 //KV-PAIR
 ////////////////////////////////////////////////////////////////////////////////
 

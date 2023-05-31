@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <assert.h>
+
 
 //KV-PAIR
 ////////////////////////////////////////////////////////////////////////////////
@@ -20,28 +22,33 @@ typedef struct{
 KVpair *KVpair_create(uint32_t klen, uint32_t vlen, char *key, void *val);
 void KVpair_free(KVpair *ptr);
 
-uint32_t KVpair_getKey(KVpair *ptr);
+uint32_t KVpair_getKey(KVpair *ptr);        //string to uint32t
+
+KVpair *KVpair_decode(uint8_t *data);
+uint8_t *KVpair_encode(KVpair *kv);
 
 //NODE
 ////////////////////////////////////////////////////////////////////////////////
 
+//| type | nkeys |  children  |   offsets  | key-values
+//|  2B  |   2B  | nkeys * 8B | nkeys * 2B | ...
+
+//TODO:for external memory
+//-children becomes an array of pointers to disk pages (uint64_t)
+//-each page contains a node
+//
 enum NODE_TYPE{
-    NT_IN,
-    NT_EX
+    NT_INT,         //internal 
+    NT_EXT          //external
 };
 
+
 typedef struct BPtreeNode{
-    uint8_t type;                   //internal or external
-    uint8_t nkeys;                  //number of keys
-
-    //Array of pointers to children
-    struct BPtreeNode **children;   //(8bytes * (nkeys+1));
-
-    //Array of pointers to key values
-    KVpair **keyOffsets;            //(8bytes * nkeys);
-
-    //array of bytes with key values
-    uint8_t *key_values;            //(nkeys*klen + nkeys*vlen)
+    uint16_t type;                   //internal or external
+    uint16_t nkeys;                  //number of keys
+    struct BPtreeNode **children;    //Array of pointers to children
+    uint16_t *keyOffsets;            //Array of offsets to key values
+    uint8_t *key_values;             //array of bytes with key values
 }BPtreeNode;
 
 
