@@ -13,23 +13,37 @@
 typedef struct{
     uint32_t klen;
     uint32_t vlen;
-    uint8_t *key;
+    char *key;
     uint8_t *val;
 }KVpair;
 
-KVpair *KVpair_create(uint32_t klen, uint32_t vlen, void *key, void *val);
+KVpair *KVpair_create(uint32_t klen, uint32_t vlen, char *key, void *val);
 void KVpair_free(KVpair *ptr);
+
+uint32_t KVpair_getKey(KVpair *ptr);
 
 //NODE
 ////////////////////////////////////////////////////////////////////////////////
 
+enum NODE_TYPE{
+    NT_IN,
+    NT_EX
+};
+
 typedef struct BPtreeNode{
     uint8_t type;                   //internal or external
     uint8_t nkeys;                  //number of keys
-    struct BPtreeNode **children;   //array of children
-    void *keyOffsets;               //array of offsets to key_values (8bytes * nkeys);
-    KVpair *key_values;            //whatever is stored    (nkeys*klen + nkeys*vlen)
+
+    //Array of pointers to children
+    struct BPtreeNode **children;   //(8bytes * (nkeys+1));
+
+    //Array of pointers to key values
+    KVpair **keyOffsets;            //(8bytes * nkeys);
+
+    //array of bytes with key values
+    uint8_t *key_values;            //(nkeys*klen + nkeys*vlen)
 }BPtreeNode;
+
 
 BPtreeNode *BPtreeNode_create(uint8_t n);
 void BPtreeNode_free(BPtreeNode *node);
@@ -49,5 +63,7 @@ typedef struct{
 BPtree *BPtree_create(uint8_t degree);
 void BPtree_free(BPtree *ptr);
 
+void BPtree_insert(BPtree *tree, BPtreeNode *root, KVpair *kv);
+BPtreeNode *BPtree_search(BPtree *btree, uint32_t key, int *idx);
 
 #endif
