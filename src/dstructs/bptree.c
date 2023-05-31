@@ -13,6 +13,7 @@ static void assert_page(BPtreeNode *node){
 
 //key-value offset for item idx
 int offsetPos(BPtreeNode *node, int idx){
+    
 }
 
 //KV-PAIR
@@ -76,65 +77,78 @@ void BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
     node->nkeys++;
 }
 
+KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){
+    //casting byte array to KVpair
+    //NOTE: If this doesnt work, use kvpair as parameter and memcpy byte array
+    uint16_t offset = node->keyOffsets[idx];
+    return (KVpair*) node->key_values[offset];
+}
+
 
 //TREE
 ////////////////////////////////////////////////////////////////////////////////
+
+
+static int NextChildIDX(BPtreeNode *node, KVpair *kv){
+    uint32_t key = KVpair_getKey(kv);
+    for(int i = 0; i < node->nkeys; i++){
+        //key is bigger than every node key
+        if(i == node->nkeys){ 
+            //go to highest child
+            return i+1;
+        }
+
+        //key is smaller than node key i
+        uint16_t node_key = KVpair_getKey(BPtreeNode_getKV(node, i));
+        if(key < node_key){ 
+            //go to left child
+            return i;
+        }
+
+        //key is between nodekey i and i+1
+        uint16_t next_node_key = KVpair_getKey(BPtreeNode_getKV(node, i+1));
+        if(key >= node_key && key < next_node_key){
+            //go to right child
+            return i+1;
+        }
+
+        //none of the cases:
+        //key is bigger than current and next node key increment i and continue
+    }
+}
+
+
+bool BPtree_insert(BPtree *tree, BPtreeNode *node, KVpair *kv){
+    bool split = false;
+    if(!node){
+        return false;
+    }
+
+    if(node->type == NT_EXT){
+        BPtreeNode_insert(node, kv);
+    }else{
+        //next children
+        BPtreeNode *next = node->children[NextChildIDX(node, kv)];
+        split = BPtree_insert(tree, next, kv);
+    }
+    //merge if a split happened
+    if(split){
+        //merge
+    }
+
+    if(node->nkeys >= tree->degree){
+        //MUST KNOW ITS PARENT TO MERGE or set a flag
+        //split
+        split = true;
+    }
+
+    return split;
+}
 
 //returns node pointer and the id of the key in idx
 BPtreeNode *BPtree_search(BPtree *btree, uint32_t key, int *idx){
     //TODO: copy from btree.c
     return NULL;
-}
-
-void BPtree_insert(BPtree *tree, BPtreeNode *root, KVpair *kv){
-    uint32_t key = KVpair_getKey(kv);
-    BPtreeNode *tmp = root;
-    BPtreeNode *p;   //parent node
-                    
-    //case 1: empty tree 
-    if(!tmp){
-        //TODO
-        return;
-    }
-
-    //traverse until leaf node is found
-    int i;
-    while(tmp != NULL){
-        p = tmp;
-        for(i = 0; i < tmp->nkeys; i++){
-            //key is bigger than every node key
-            if(i == tmp->nkeys){ 
-                //go to highest child
-                tmp = tmp->children[i+1];
-                break;
-            }
-
-            //key is smaller than node key i
-            if(key < KVpair_getKey(tmp->keyOffsets[i])){ 
-                //go to left child
-                tmp = tmp->children[i];
-                break;
-            }
-            //key is between nodekey i and i+1
-            if(key >= KVpair_getKey(tmp->keyOffsets[i]) && key < KVpair_getKey(tmp->keyOffsets[i+1])){ 
-                //go to right child
-                tmp = tmp->children[i+1];
-                break;
-            }
-        }
-    }
-
-    //case 2: leaf node with empty space
-    if(p->nkeys < tree->degree){
-        BPtreeNode_insert(p, kv);
-        
-    }else{ 
-        //case 3: leaf node full 
-        //split and insert 
-        //TODO: analyze what happens when parent becomes full after split
-        BPtreeNode_split(&p); 
-        BPtree_insert(tree, p, kv);
-    }
 }
 
 BPtree *BPtree_create(uint8_t degree){

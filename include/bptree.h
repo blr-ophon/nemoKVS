@@ -24,8 +24,8 @@ void KVpair_free(KVpair *ptr);
 
 uint32_t KVpair_getKey(KVpair *ptr);        //string to uint32t
 
-KVpair *KVpair_decode(uint8_t *data);
-uint8_t *KVpair_encode(KVpair *kv);
+KVpair *KVpair_decode(uint8_t *offset);     //convert byte array to KV pair
+uint8_t *KVpair_encode(KVpair *kv);         //convert KV pair to byte array
 
 //NODE
 ////////////////////////////////////////////////////////////////////////////////
@@ -59,6 +59,8 @@ void BPtreeNode_insert(BPtreeNode *node, KVpair *kv);
 void BPtreeNode_split(struct BPtreeNode **node);
 void BPtreeNode_merge(BPtreeNode *node, BPtreeNode *p);
 
+KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx);
+
 //TREE
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -70,7 +72,7 @@ typedef struct{
 BPtree *BPtree_create(uint8_t degree);
 void BPtree_free(BPtree *ptr);
 
-void BPtree_insert(BPtree *tree, BPtreeNode *root, KVpair *kv);
+bool BPtree_insert(BPtree *tree, BPtreeNode *node, KVpair *kv);
 BPtreeNode *BPtree_search(BPtree *btree, uint32_t key, int *idx);
 
 #endif
