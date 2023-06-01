@@ -88,7 +88,7 @@ KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){
 //TREE
 ////////////////////////////////////////////////////////////////////////////////
 
-
+//returns ID of the next child. Used to traverse the tree
 static int NextChildIDX(BPtreeNode *node, KVpair *kv){
     uint32_t key = KVpair_getKey(kv);
     for(int i = 0; i < node->nkeys; i++){
@@ -117,7 +117,6 @@ static int NextChildIDX(BPtreeNode *node, KVpair *kv){
     }
 }
 
-
 bool BPtree_insert(BPtree *tree, BPtreeNode *node, KVpair *kv){
     bool split = false;
     if(!node){
@@ -131,13 +130,14 @@ bool BPtree_insert(BPtree *tree, BPtreeNode *node, KVpair *kv){
         BPtreeNode *next = node->children[NextChildIDX(node, kv)];
         split = BPtree_insert(tree, next, kv);
     }
+
     //merge if a split happened
     if(split){
         //merge
     }
 
+    //if insert or merging makes node full
     if(node->nkeys >= tree->degree){
-        //MUST KNOW ITS PARENT TO MERGE or set a flag
         //split
         split = true;
     }
@@ -148,6 +148,7 @@ bool BPtree_insert(BPtree *tree, BPtreeNode *node, KVpair *kv){
 //returns node pointer and the id of the key in idx
 BPtreeNode *BPtree_search(BPtree *btree, uint32_t key, int *idx){
     //TODO: copy from btree.c
+    //traverse until entry or empty node is found
     return NULL;
 }
 
@@ -181,6 +182,27 @@ void BPtree_free(BPtree *ptr){
 
 //splits node and returns it's pointer. returned node must be merged with parent node
 void BPtreeNode_split(BPtreeNode **node){
+    //first half
+    //create node
+    for(int i = 0; i < ((*node)->nkeys)/2; i++){
+        //insert data from old to new node
+    }
+
+    //pivot (check even/half)
+
+    //second half
+    //create node
+    for(int i = ((*node)->nkeys)/2 + 1; i < (*node)->nkeys; i++){
+        //insert data from old to new node
+    }
+
+    //create parent node (pivot or root copy)
+    //link parent node to 2 children
+
+
+    //creates 3 new nodes from node
+    //destroy node
+    
     //splits an m-node into 2 (m/2)-nodes 
     //must keep children
 }
