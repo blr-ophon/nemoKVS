@@ -8,85 +8,35 @@ static void assert_page(BPtreeNode *node){
     //assert node fits in a page
 }
 
-//| type | nkeys |  children  |   offsets  | key-values
-//|  2B  |   2B  | nkeys * 8B | nkeys * 2B | ...
-
 //key-value offset for item idx
 int offsetPos(BPtreeNode *node, int idx){
     
 }
 
-//KV-PAIR
 ////////////////////////////////////////////////////////////////////////////////
 
-KVpair *KVpair_create(uint32_t klen, uint32_t vlen, char *key, void *val){
-    KVpair *kv = malloc(sizeof(KVpair));
+BPtree *BPtree_create(uint8_t degree){
+    BPtree *rv = malloc(sizeof(BPtree));
 
-    kv->klen = klen;
-    kv->vlen = vlen;
+    rv->root = BPtreeNode_create(degree);
+    rv->degree = degree;
 
-    kv->key = malloc(klen);
-    strncpy(kv->key, key, klen);
-
-    kv->val = malloc(vlen);
-    memcpy(kv->val, val, vlen);
-
-    return kv;
-}
-
-void KVpair_free(KVpair *ptr){
-    if(ptr->key) free(ptr->key);
-    if(ptr->val) free(ptr->val);
-    if(ptr) free(ptr);
-}
-
-uint32_t KVpair_getKey(KVpair *ptr){
-    return atol(ptr->key);
-}
-
-//NODE
-////////////////////////////////////////////////////////////////////////////////
-
-//create a node with size n
-BPtreeNode *BPtreeNode_create(uint8_t nkeys){
-    BPtreeNode *rv = (BPtreeNode*) calloc(1, sizeof(BPtreeNode));
-    rv->children = calloc(nkeys, sizeof(void*));
-    rv->keyOffsets = calloc(nkeys, sizeof(void*));
-
-    rv->nkeys = nkeys;
     return rv;
 }
 
-void BPtreeNode_free(BPtreeNode *node){
-    free(node->children);
-    free(node->keyOffsets);
-    //TODO free record
-    free(node);
-}
+static void BPtree_free_rec(BPtreeNode *node){
+    if(node == NULL) return;
 
-void BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
-    //type set and check of split is done by BPtree_insert
-    if(!node){
-        node = BPtreeNode_create(0);
+    for(int i = 0; i < node->nkeys; i++){
+        BPtree_free_rec(node->children[i]);
     }
-
-    //append kv to key_values
-    
-    //Update keyOffsets and children links
-    
-    node->nkeys++;
+    BPtreeNode_free(node);
 }
 
-KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){
-    //casting byte array to KVpair
-    //NOTE: If this doesnt work, use kvpair as parameter and memcpy byte array
-    uint16_t offset = node->keyOffsets[idx];
-    return (KVpair*) node->key_values[offset];
+void BPtree_free(BPtree *ptr){
+    BPtree_free_rec(ptr->root);
+    free(ptr);
 }
-
-
-//TREE
-////////////////////////////////////////////////////////////////////////////////
 
 //returns ID of the next child. Used to traverse the tree
 static int NextChildIDX(BPtreeNode *node, KVpair *kv){
@@ -150,69 +100,4 @@ BPtreeNode *BPtree_search(BPtree *btree, uint32_t key, int *idx){
     //TODO: copy from btree.c
     //traverse until entry or empty node is found
     return NULL;
-}
-
-BPtree *BPtree_create(uint8_t degree){
-    BPtree *rv = malloc(sizeof(BPtree));
-
-    rv->root = BPtreeNode_create(degree);
-    rv->degree = degree;
-
-    return rv;
-}
-
-static void BPtree_free_rec(BPtreeNode *node){
-    if(node == NULL) return;
-
-    for(int i = 0; i < node->nkeys; i++){
-        BPtree_free_rec(node->children[i]);
-    }
-    BPtreeNode_free(node);
-}
-
-void BPtree_free(BPtree *ptr){
-    BPtree_free_rec(ptr->root);
-    free(ptr);
-}
-
-//NOTES
-//whenever there is a split, a single parent node rises and merges to parent.
-//The parent can never be full, its max size is degree-1.
-//As soon as it becomes full, it splits and is merged to it's parent
-
-//splits node and returns it's pointer. returned node must be merged with parent node
-void BPtreeNode_split(BPtreeNode **node){
-    //first half
-    //create node
-    for(int i = 0; i < ((*node)->nkeys)/2; i++){
-        //insert data from old to new node
-    }
-
-    //pivot (check even/half)
-
-    //second half
-    //create node
-    for(int i = ((*node)->nkeys)/2 + 1; i < (*node)->nkeys; i++){
-        //insert data from old to new node
-    }
-
-    //create parent node (pivot or root copy)
-    //link parent node to 2 children
-
-
-    //creates 3 new nodes from node
-    //destroy node
-    
-    //splits an m-node into 2 (m/2)-nodes 
-    //must keep children
-}
-
-//To be used with split. Merges splited 'node' with its parent
-void BPtreeNode_merge(BPtreeNode *node, BPtreeNode *p){
-    /*
-     * (insert all keys and children of 'node' into 'p')
-     * if(mergednode->size >= max){
-     *      split node
-     * }
-     */
 }

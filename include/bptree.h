@@ -8,61 +8,8 @@
 #include <stdbool.h>
 #include <assert.h>
 
-
-//KV-PAIR
-////////////////////////////////////////////////////////////////////////////////
-
-typedef struct{
-    uint32_t klen;
-    uint32_t vlen;
-    char *key;
-    uint8_t *val;
-}KVpair;
-
-KVpair *KVpair_create(uint32_t klen, uint32_t vlen, char *key, void *val);
-void KVpair_free(KVpair *ptr);
-
-uint32_t KVpair_getKey(KVpair *ptr);        //string to uint32t
-
-KVpair *KVpair_decode(uint8_t *offset);     //convert byte array to KV pair
-uint8_t *KVpair_encode(KVpair *kv);         //convert KV pair to byte array
-
-//NODE
-////////////////////////////////////////////////////////////////////////////////
-
-//| type | nkeys |  children  |   offsets  | key-values
-//|  2B  |   2B  | nkeys * 8B | nkeys * 2B | ...
-
-//TODO:for external memory
-//-children becomes an array of pointers to disk pages (uint64_t)
-//-each page contains a node
-//
-enum NODE_TYPE{
-    NT_INT,         //internal 
-    NT_EXT          //external
-};
-
-
-typedef struct BPtreeNode{
-    uint16_t type;                   //internal or external
-    uint16_t nkeys;                  //number of keys
-    struct BPtreeNode **children;    //Array of pointers to children
-    uint16_t *keyOffsets;            //Array of offsets to key values
-    uint8_t *key_values;             //array of bytes with key values
-}BPtreeNode;
-
-
-BPtreeNode *BPtreeNode_create(uint8_t n);
-void BPtreeNode_free(BPtreeNode *node);
-
-void BPtreeNode_insert(BPtreeNode *node, KVpair *kv);
-void BPtreeNode_split(struct BPtreeNode **node);
-void BPtreeNode_merge(BPtreeNode *node, BPtreeNode *p);
-
-KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx);
-
-//TREE
-////////////////////////////////////////////////////////////////////////////////
+#include "nodes.h"
+#include "kvpair.h"
 
 typedef struct{
     uint8_t degree;
