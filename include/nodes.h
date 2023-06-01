@@ -41,6 +41,13 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv);
 BPtreeNode *BPtreeNode_split(struct BPtreeNode *node);
 void BPtreeNode_merge(BPtreeNode *node, BPtreeNode *p);
 
-KVpair BPtreeNode_getKV(BPtreeNode *node, int idx);
+KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx);
+void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv);
+
+
+
+//LATER
+BPtreeNode *BPtreeNode_pageLoad(FILE *page);
+int BPtreeNode_pageDump(FILE *page, BPtreeNode *node);
 
 #endif

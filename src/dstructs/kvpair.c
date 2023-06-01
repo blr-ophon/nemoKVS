@@ -1,5 +1,27 @@
 #include "kvpair.h"
 
+KVpair *KVpair_create(uint32_t klen, uint32_t vlen, char *key, void *val){
+    KVpair *kv = malloc(sizeof(KVpair));
+
+    kv->klen = klen;
+    kv->vlen = vlen;
+
+    kv->key = malloc(klen);
+    strncpy(kv->key, key, klen);
+
+    kv->val = malloc(vlen);
+    memcpy(kv->val, val, vlen);
+
+    return kv;
+}
+
+void KVpair_free(KVpair *ptr){
+    if(ptr->key) free(ptr->key);
+    if(ptr->val) free(ptr->val);
+    if(ptr) free(ptr);
+}
+
+
 
 KVpair *KVpair_decode(uint8_t *bytestream){ 
     uint32_t klen;
@@ -24,7 +46,7 @@ KVpair *KVpair_decode(uint8_t *bytestream){
 }
                                            
 uint8_t *KVpair_encode(KVpair *kv){
-    size_t streamSize = 2*sizeof(uint32_t) + kv->klen + kv->vlen;
+    size_t streamSize = KVpair_getSize(kv);
     uint8_t *bytestream = malloc(streamSize);
 
     memcpy(bytestream, &kv->klen, sizeof(uint32_t));
@@ -35,32 +57,18 @@ uint8_t *KVpair_encode(KVpair *kv){
     return bytestream;
 }
 
-KVpair *KVpair_create(uint32_t klen, uint32_t vlen, char *key, void *val){
-    KVpair *kv = malloc(sizeof(KVpair));
-
-    kv->klen = klen;
-    kv->vlen = vlen;
-
-    kv->key = malloc(klen);
-    strncpy(kv->key, key, klen);
-
-    kv->val = malloc(vlen);
-    memcpy(kv->val, val, vlen);
-
-    return kv;
+void KVpair_removeVal(KVpair *kv){
+    kv->vlen = 0;
+    if(kv->val) free(kv->val);
 }
 
-void KVpair_free(KVpair *ptr){
-    if(ptr->key) free(ptr->key);
-    if(ptr->val) free(ptr->val);
-    if(ptr) free(ptr);
-}
 
-uint32_t KVpair_getKey(KVpair *ptr){
-    return atol(ptr->key);
+
+//positive if kv1 > kv2 | 0 if kv1 == kv2 | negative if kv1 < kv2
+int KVpair_compare(KVpair *kv1, KVpair *kv2){
+    return atol(kv1->key) - atol(kv2->key);
 }
 
 size_t KVpair_getSize(KVpair *ptr){
     return 2*sizeof(uint32_t) + ptr->klen + ptr->vlen;
 }
-

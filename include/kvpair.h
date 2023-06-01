@@ -12,13 +12,15 @@ typedef struct{
     uint8_t *val;
 }KVpair;
 
+
 KVpair *KVpair_create(uint32_t klen, uint32_t vlen, char *key, void *val);
 void KVpair_free(KVpair *ptr);
 
-uint32_t KVpair_getKey(KVpair *ptr);        //string to uint32t
-size_t KVpair_getSize(KVpair *ptr);        //string to uint32t
-
 KVpair *KVpair_decode(uint8_t *bytestream);     //convert byte array to KV pair
-uint8_t *KVpair_encode(KVpair *kv);         //convert KV pair to byte array
+uint8_t *KVpair_encode(KVpair *kv);             //convert KV pair to byte array
+void KVpair_removeVal(KVpair *kv);
+
+int KVpair_compare(KVpair *kv1, KVpair *kv2);
+size_t KVpair_getSize(KVpair *ptr);             
 
 #endif
