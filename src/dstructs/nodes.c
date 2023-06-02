@@ -31,6 +31,7 @@ void BPtreeNode_print(BPtreeNode *node){
             break;
     }
     printf("No. of keys: %u\n", node->nkeys);
+    printf("Size of data: %lu\n", node->dataSize);
     printf("Child links: ");
     for(uint32_t i = 0; i < node->nkeys+1; i++){
         printf("%lx | ", (uint64_t) node->children[i]);
@@ -41,7 +42,7 @@ void BPtreeNode_print(BPtreeNode *node){
     }
     printf("\nKV pairs dump: ");
     for(uint32_t i = 0; i < node->dataSize; i++){
-        if(node->dataSize % 8 == 0){
+        if(i % 16 == 0){
             printf("\n");
         }
         printf("%c ", node->key_values[i]);
@@ -221,7 +222,7 @@ KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){
 void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
     assert(node->type == NT_EXT);
     //expects keyoffsets[idx] to be previously filled by previous node
-    //keyOffsets[0] is set to 0 in node creation
+    //- keyOffsets[0] is set to 0 in node creation
     uint16_t offset = node->keyOffsets[idx]; 
     size_t kv_size = KVpair_getSize(kv);
 
@@ -229,6 +230,13 @@ void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
     node->key_values = realloc(node->key_values, node->dataSize);
 
     uint8_t *bytestream = KVpair_encode(kv);
+    for(uint32_t i = 0; i < kv_size; i++){
+        if(i % 16 == 0){
+            printf("\n");
+        }
+        printf("%d ", bytestream[i]);
+    }
+    printf("\n\n");
     memcpy(&node->key_values[offset], bytestream, kv_size);
 
     //appends offset for the next key

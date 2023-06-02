@@ -35,35 +35,44 @@
 
 
 int main(void){
-    DB_create("test_db");
-    Database *db = DB_load("test_db");
-    if(!db){
-        printf("database not found");
-        return -1;
-    }
+    BPtree *tree = BPtree_create(10);
+    BPtree_print(tree);
 
-    uint8_t data1[7] = {1,2,3,4,5,6,7};
-    DB_Insert(db, "testkey1", data1, 7);
+    KVpair * kv1 = KVpair_create(9, 10, "testKEY1", "test-VAL1");
+    BPtree_insert(tree, kv1);
+    //KVpair * kv2 = KVpair_create(9, 10, "testKEY2", "test-VAL2");
+    //BPtree_insert(tree, kv2);
 
-    uint8_t data2[7] = {7,6,5,4,3,2,1};
-    DB_Insert(db, "testkey2", data2, 7);
+    BPtreeNode_print(tree->root->children[0]);
+    //DB_create("test_db");
+    //Database *db = DB_load("test_db");
+    //if(!db){
+    //    printf("database not found");
+    //    return -1;
+    //}
 
+    //uint8_t data1[7] = {1,2,3,4,5,6,7};
+    //DB_Insert(db, "testkey1", data1, 7);
 
-    Record *rec = DB_Read(db, "testkey1");
-    for(uint32_t i = 0; i < rec->header.Vsize; i++){
-        printf("%d ", rec->value[i]);
-    }
-    printf("\n"); 
-
-    rec = DB_Read(db, "testkey2");
-    for(uint32_t i = 0; i < rec->header.Vsize; i++){
-        printf("%d ", rec->value[i]);
-    }
-    printf("\n"); 
+    //uint8_t data2[7] = {7,6,5,4,3,2,1};
+    //DB_Insert(db, "testkey2", data2, 7);
 
 
-    Record_free(rec);
-    DB_free(db);
+    //Record *rec = DB_Read(db, "testkey1");
+    //for(uint32_t i = 0; i < rec->header.Vsize; i++){
+    //    printf("%d ", rec->value[i]);
+    //}
+    //printf("\n"); 
+
+    //rec = DB_Read(db, "testkey2");
+    //for(uint32_t i = 0; i < rec->header.Vsize; i++){
+    //    printf("%d ", rec->value[i]);
+    //}
+    //printf("\n"); 
+
+
+    //Record_free(rec);
+    //DB_free(db);
     return 0;
 }
 

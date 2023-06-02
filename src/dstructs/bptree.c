@@ -6,9 +6,9 @@ void BPtree_print(BPtree *tree){
         printf("> Empty tree\n");
         return;
     }
-    printf("\n==== NODE ====\n");
+    printf("\n====== TREE ======\n");
     printf("Degree: %d\n", tree->degree); 
-    printf("Root: \n");
+    printf("Root:");
     BPtreeNode_print(tree->root);
     //TODO: print all nodes of the tree in order
 }
@@ -120,11 +120,12 @@ void BPtree_insert(BPtree *tree, KVpair *kv){
     if(!tree->root->children[0]){
         //Empty tree. Create first node and insert KV
         tree->root->children[0] = BPtreeNode_create(1);
-        BPtreeNode_insert(tree->root->children[0], kv);
+        tree->root->children[0]->type = NT_EXT;
+        BPtreeNode_appendKV(tree->root->children[0], 0,  kv);
         return;
     }
 
-    BPtree_insertR(tree, tree->root, tree->root->children[0], kv);
+    BPtree_insertR(tree, tree->root->children[0], tree->root, kv);
 }
 
 //returns node pointer and the id of the key in idx

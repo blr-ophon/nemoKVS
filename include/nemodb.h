@@ -2,6 +2,7 @@
 #define NEMODB_h
 
 #include "hashtable.h"
+#include "bptree.h"
 #include "kvstore.h"
 #include <string.h>
 #include <stdlib.h>

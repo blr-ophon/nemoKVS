@@ -64,10 +64,15 @@ uint8_t *KVpair_encode(KVpair *kv){
     size_t streamSize = KVpair_getSize(kv);
     uint8_t *bytestream = malloc(streamSize);
 
-    memcpy(bytestream, &kv->klen, sizeof(uint32_t));
-    memcpy(bytestream, &kv->vlen, sizeof(uint32_t));
-    memcpy(bytestream, kv->key, kv->klen);
-    memcpy(bytestream, kv->val, kv->vlen);
+    uint8_t *tmp = bytestream;
+
+    memcpy(tmp, &kv->klen, sizeof(uint32_t));
+    tmp += sizeof(uint32_t);
+    memcpy(tmp, &kv->vlen, sizeof(uint32_t));
+    tmp += sizeof(uint32_t);
+    memcpy(tmp, kv->key, kv->klen);
+    tmp += kv->klen;
+    memcpy(tmp, kv->val, kv->vlen);
 
     return bytestream;
 }
