@@ -14,12 +14,13 @@
 typedef struct{
     uint8_t degree;
     BPtreeNode *root;
+    //root 
 }BPtree;
 
 BPtree *BPtree_create(uint8_t degree);
 void BPtree_free(BPtree *ptr);
 
-bool BPtree_insertR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv);
+void BPtree_insert(BPtree *tree, KVpair *kv);
 BPtreeNode *BPtree_search(BPtree *btree, uint32_t key, int *idx);
 
 #endif

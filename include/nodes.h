@@ -40,7 +40,7 @@ void BPtreeNode_free(BPtreeNode *node);
 BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv);
 
 BPtreeNode *BPtreeNode_split(struct BPtreeNode *node);
-BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *p);
+BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *splitted);
 
 KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx);
 void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv);

@@ -141,21 +141,40 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     return p;
 }
 
-//To be used with split. Merges splited 'node' with its parent
-BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *p){
-    //expects node to be of size 1, coming from a split
-    //expects node and p to be internal nodes
+//To be used with split. Merges 'splited' node with it's parent
+//expects splitted to be of size 1, coming from a split
+//expects splitted and node to be internal nodes
+//
+//How it works:
+//before splitting 
+BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *splitted){
+    //insert splitted to node
+    KVpair *splittedKV = BPtreeNode_getKV(splitted, 0);
+    BPtreeNode *merged = BPtreeNode_insert(node, splittedKV);
+
+    //find which children will receive the children of splitted
+    int child_idx = -1;
+    for(int i = 0; i < merged->nkeys; i++){
+        KVpair *tmpKV = BPtreeNode_getKV(splitted, i);
+        if(KVpair_compare(splittedKV, tmpKV) < 0){
+            child_idx = i;
+            KVpair_free(tmpKV);
+            break;
+        }
+        KVpair_free(tmpKV);
+    }
+    KVpair_free(splittedKV);
+
+    if(child_idx == -1){    //splittedKV superior to all kvs of node
+        child_idx = merged->nkeys -1;
+    }
+
+    merged->children[child_idx] = splitted->children[0];        //left child
+    merged->children[child_idx+1] = splitted->children[1];      //right child
     
-    //TODO: for immutable data, i need grandparent node to link to new merged parent
-    
-    //insert node to parent 
-    
-    /*
-     * (insert all keys and children of 'node' into 'p')
-     * if(mergednode->size >= max){
-     *      split node
-     * }
-     */
+    BPtreeNode_free(node);
+    BPtreeNode_free(splitted);
+    return merged;
 }
 
 KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){

@@ -1,7 +1,6 @@
 #include "bptree.h"
 
 
-
 BPtree *BPtree_create(uint8_t degree){
     BPtree *rv = malloc(sizeof(BPtree));
     rv->degree = degree;
@@ -67,21 +66,20 @@ static int NextChildIDX(BPtreeNode *node, KVpair *kv){
     return 0;
 }
 
-bool BPtree_insertR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
+static bool BPtree_insertR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
+    //TODO: set node type correctly 
     bool split = false;
-    if(!node){
-        return false;
-    }
 
     if(node->type == NT_EXT){
         //insert kv
         BPtreeNode *inserted = BPtreeNode_insert(node, kv);
+        inserted->type = NT_EXT;
         node = inserted;
         //link parent to new node with inserted value
         p->children[NextChildIDX(p, kv)] = inserted;
 
     }else{
-        //next children
+        //traverse next children
         BPtreeNode *next = node->children[NextChildIDX(node, kv)];
         split = BPtree_insertR(tree, next, node, kv);
     }
