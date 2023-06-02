@@ -76,8 +76,6 @@ void BPtreeNode_free(BPtreeNode *node){
 
 
 BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
-    //type set and check of split is done by BPtree_insert
-    
     if(!node){
         node = BPtreeNode_create(0);
     }
@@ -85,13 +83,22 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
     //create a copy of the node with inserted value
     BPtreeNode *newNode = BPtreeNode_create(node->nkeys + 1);
     newNode->children[0] = node->children[0];
+    newNode->type = node->type;
+
+    if(node->nkeys == 0){
+        //TODO: fix
+        BPtreeNode_appendKV(newNode, 0, kv);
+        BPtreeNode_free(node);
+        return newNode;
+    }
 
 
-    //append kv to key_values
+    //Iterate through all kvs of node. when one superior to kv is found, append kv
     for(int i = 0; i < newNode->nkeys; i++){
         KVpair *tmpKV = BPtreeNode_getKV(node, i);
 
-        if(i == 0){  //test if tmpKV will be inserted in position 0
+        //kv is inferior to all kvs in node
+        if(i == 0){  
             if(KVpair_compare(kv, tmpKV) < 0){
                 //add new children to the beginning
                 newNode->children[0] = NULL;
@@ -104,10 +111,8 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
             }
         }
 
-        if(KVpair_compare(tmpKV, kv) > 0 || i == newNode->nkeys){
-            //if key being looked is larger than the one being inserted or is the last key,
-            //append it here
-
+        //kv is inferior to tmpKV OR kv is the last key. Append kv
+        if(KVpair_compare(kv,tmpKV) < 0 || i == newNode->nkeys -1){
             //append child to children array (empty)
             newNode->children[i+1] = NULL;
 
@@ -116,6 +121,8 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
             KVpair_free(tmpKV);
             continue;
         }
+
+        //kv is superior to tmpKVm (but is not last the key). Append tmpKV
 
         //append child to children array
         newNode->children[i+1] = node->children[i];
@@ -230,13 +237,13 @@ void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
     node->key_values = realloc(node->key_values, node->dataSize);
 
     uint8_t *bytestream = KVpair_encode(kv);
-    for(uint32_t i = 0; i < kv_size; i++){
-        if(i % 16 == 0){
-            printf("\n");
-        }
-        printf("%d ", bytestream[i]);
-    }
-    printf("\n\n");
+    //for(uint32_t i = 0; i < kv_size; i++){
+    //    if(i % 16 == 0){
+    //        printf("\n");
+    //    }
+    //    printf("%d ", bytestream[i]);
+    //}
+    //printf("\n\n");
     memcpy(&node->key_values[offset], bytestream, kv_size);
 
     //appends offset for the next key

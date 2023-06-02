@@ -38,10 +38,10 @@ int main(void){
     BPtree *tree = BPtree_create(10);
     BPtree_print(tree);
 
-    KVpair * kv1 = KVpair_create(9, 10, "testKEY1", "test-VAL1");
+    KVpair * kv1 = KVpair_create(1, 10, "1", "test-VAL1");
+    KVpair * kv2 = KVpair_create(1, 10, "2", "test-VAL2");
+    BPtree_insert(tree, kv2);
     BPtree_insert(tree, kv1);
-    //KVpair * kv2 = KVpair_create(9, 10, "testKEY2", "test-VAL2");
-    //BPtree_insert(tree, kv2);
 
     BPtreeNode_print(tree->root->children[0]);
     //DB_create("test_db");
