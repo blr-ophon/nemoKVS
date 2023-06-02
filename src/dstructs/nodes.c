@@ -5,21 +5,22 @@
 #define BTREE_MAX_VAL_SIZE  3000
 
 
-
 static void assert_page(BPtreeNode *node){
     //assert node fits in a page
 }
 
 
-
 //create a node with size n
 BPtreeNode *BPtreeNode_create(uint8_t nkeys){
-    //TODO: check number of links
     BPtreeNode *rv = (BPtreeNode*) calloc(1, sizeof(BPtreeNode));
-    rv->children = calloc(nkeys+1, sizeof(void*));
-    rv->keyOffsets = calloc(nkeys, sizeof(uint16_t));
-    rv->keyOffsets[0] = 0;
-    rv->key_values = NULL;              //key_values have variable size
+    if(nkeys){
+        rv->children = calloc(nkeys+1, sizeof(void*));
+        rv->keyOffsets = calloc(nkeys, sizeof(uint16_t));
+        rv->keyOffsets[0] = 0;
+        rv->key_values = NULL;              //key_values have variable size
+    }else{  //used for master root
+        rv->children = calloc(1, sizeof(void*));
+    }
     rv->nkeys = nkeys;
     return rv;
 }
@@ -91,9 +92,7 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
 
 
 //splits node and returns it's pointer. returned node must be merged with parent node
-//TODO: works differently for external and internal nodes
 BPtreeNode *BPtreeNode_split(BPtreeNode *node){
-    //TODO test for arbtrary values
     int i;
     bool internal = (node->type == NT_INT);
     bool odd = (node->nkeys % 2 != 0);
@@ -101,13 +100,13 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     //first half
     //create node
     BPtreeNode *Lnode = BPtreeNode_create(node->nkeys/2);
-    for(i = 0; i < (node->nkeys)/2 - internal; i++){
+    for(i = 0; i < (node->nkeys)/2; i++){
         //insert data from old to new node
-        BPtreeNode_insert(Lnode, BPtreeNode_getKV(node, i));
+        KVpair *tmpKV = BPtreeNode_getKV(node, i);
+        BPtreeNode_appendKV(Lnode, i, tmpKV);
+        KVpair_free(tmpKV);
     }
-    memcpy(Lnode->children, node->children, (node->nkeys)/2 - internal);
-    memcpy(Lnode->keyOffsets, node->keyOffsets, (node->nkeys)/2 - internal);
-    memcpy(Lnode->key_values, node->key_values, (node->nkeys)/2 - internal);
+    memcpy(Lnode->children, node->children, (node->nkeys)/2);
     Lnode->type = node->type;
 
 
@@ -115,22 +114,24 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     BPtreeNode *p = BPtreeNode_create(1);
     KVpair *p_kv = BPtreeNode_getKV(node, (node->nkeys)/2 - !odd);
     KVpair_removeVal(p_kv);
-    BPtreeNode_insert(p, BPtreeNode_getKV(node, (node->nkeys)/2 - !odd));
+    BPtreeNode_appendKV(p, 0, p_kv);
+    KVpair_free(p_kv);
     p->type = NT_INT;
 
 
     //second half
     //create node
     BPtreeNode *Rnode = BPtreeNode_create(node->nkeys/2 + odd - internal);
-    i+= internal;
+    i+= internal;   
     for(; i < node->nkeys; i++){
-        BPtreeNode_insert(Rnode, BPtreeNode_getKV(node, i));
+        //insert data from old to new node
+        KVpair *tmpKV = BPtreeNode_getKV(node, i);
+        BPtreeNode_appendKV(Rnode, i, tmpKV);
+        KVpair_free(tmpKV);
     }
     int half = (node->nkeys)/2;
     memcpy(Rnode->children, &node->children[half], half + odd - internal);
-    memcpy(Rnode->keyOffsets, &node->keyOffsets[half], half + odd - internal);
-    memcpy(Rnode->key_values, &node->key_values[half], half + odd - internal);
-    Lnode->type = node->type;
+    Rnode->type = node->type;
 
     //link parent node to 2 children
     p->children[0] = Lnode;
@@ -144,9 +145,6 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
 //To be used with split. Merges 'splited' node with it's parent
 //expects splitted to be of size 1, coming from a split
 //expects splitted and node to be internal nodes
-//
-//How it works:
-//before splitting 
 BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *splitted){
     //insert splitted to node
     KVpair *splittedKV = BPtreeNode_getKV(splitted, 0);
