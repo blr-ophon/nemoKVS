@@ -94,25 +94,26 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
 
 
     //Iterate through all kvs of node. when one superior to kv is found, append kv
+    bool kvInserted = false;
+    int tmpkv_idx = 0;
     for(int i = 0; i < newNode->nkeys; i++){
-        KVpair *tmpKV = BPtreeNode_getKV(node, i);
+        KVpair *tmpKV = BPtreeNode_getKV(node, tmpkv_idx);
 
-        //kv is inferior to all kvs in node
-        if(i == 0){  
-            if(KVpair_compare(kv, tmpKV) < 0){
-                //add new children to the beginning
-                newNode->children[0] = NULL;
-                newNode->children[1] = node->children[0];
+        //after kv is inserted, no comparisons are needed
+        if(kvInserted){
+            //append child to children array
+            newNode->children[i+1] = node->children[tmpkv_idx];
 
-                //append kv pair and offset
-                BPtreeNode_appendKV(newNode, i, kv);
-                KVpair_free(tmpKV);
-                continue;
-            }
+            //append tmpkv pair and offset 
+            BPtreeNode_appendKV(newNode, i, tmpKV);
+            tmpkv_idx++;
+            KVpair_free(tmpKV);
+            continue;
         }
 
-        //kv is inferior to tmpKV OR kv is the last key. Append kv
-        if(KVpair_compare(kv,tmpKV) < 0 || i == newNode->nkeys -1){
+        //kv is superior to all kvs in node. All kvs from node were already appended.
+        //special case because tmpKV is NULL and cant be compared
+        if(tmpkv_idx == node->nkeys){ 
             //append child to children array (empty)
             newNode->children[i+1] = NULL;
 
@@ -122,13 +123,32 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
             continue;
         }
 
+
+        //kv is inferior to tmpKV OR kv is the last key. Append kv
+        if(KVpair_compare(kv,tmpKV) < 0){
+            //append child to children array 
+            if(i == 0){ //kv is inferior to all kvs in node
+                newNode->children[0] = NULL;
+                newNode->children[1] = node->children[0];
+            }else{
+                newNode->children[i+1] = NULL;
+            }
+
+            //append kv pair and offset 
+            BPtreeNode_appendKV(newNode, i, kv);
+            KVpair_free(tmpKV);
+            kvInserted = true;
+            continue;
+        }
+
         //kv is superior to tmpKVm (but is not last the key). Append tmpKV
 
         //append child to children array
-        newNode->children[i+1] = node->children[i];
+        newNode->children[i+1] = node->children[tmpkv_idx];
 
-        //append kv pair and offset 
+        //append tmpkv pair and offset 
         BPtreeNode_appendKV(newNode, i, tmpKV);
+        tmpkv_idx++;
         KVpair_free(tmpKV);
     }
 
@@ -216,12 +236,14 @@ BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *splitted){
     merged->children[child_idx] = splitted->children[0];        //left child
     merged->children[child_idx+1] = splitted->children[1];      //right child
     
-    BPtreeNode_free(node);
     BPtreeNode_free(splitted);
     return merged;
 }
 
 KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){
+    if(idx + 1 > node->nkeys){ 
+        return NULL;
+    }
     assert(node->keyOffsets);
     return KVpair_decode(&node->key_values[node->keyOffsets[idx]]);
 }

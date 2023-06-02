@@ -31,9 +31,11 @@ KVpair *KVpair_create(uint32_t klen, uint32_t vlen, char *key, void *val){
 }
 
 void KVpair_free(KVpair *ptr){
-    if(ptr->key) free(ptr->key);
-    if(ptr->val) free(ptr->val);
-    if(ptr) free(ptr);
+    if(ptr){
+        if(ptr->key) free(ptr->key);
+        if(ptr->val) free(ptr->val);
+        if(ptr) free(ptr);
+    }
 }
 
 

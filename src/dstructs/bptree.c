@@ -122,6 +122,7 @@ void BPtree_insert(BPtree *tree, KVpair *kv){
         tree->root->children[0] = BPtreeNode_create(1);
         tree->root->children[0]->type = NT_EXT;
         BPtreeNode_appendKV(tree->root->children[0], 0,  kv);
+        
         //tree->root->children[0] = BPtreeNode_insert(tree->root->children[0], kv);
         return;
     }
