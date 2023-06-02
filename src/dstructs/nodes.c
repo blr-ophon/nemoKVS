@@ -1,14 +1,22 @@
 #include "nodes.h"
 
+#define BTREE_PAGE_SIZE     4096
+#define BTREE_MAX_KEY_SIZE  1000
+#define BTREE_MAX_VAL_SIZE  3000
+
+
+
 static void assert_page(BPtreeNode *node){
     //assert node fits in a page
 }
+
+
 
 //create a node with size n
 BPtreeNode *BPtreeNode_create(uint8_t nkeys){
     //TODO: check number of links
     BPtreeNode *rv = (BPtreeNode*) calloc(1, sizeof(BPtreeNode));
-    rv->children = calloc(nkeys, sizeof(void*));
+    rv->children = calloc(nkeys+1, sizeof(void*));
     rv->keyOffsets = calloc(nkeys, sizeof(uint16_t));
     rv->keyOffsets[0] = 0;
     rv->key_values = NULL;              //key_values have variable size
@@ -23,7 +31,8 @@ void BPtreeNode_free(BPtreeNode *node){
     free(node);
 }
 
-//TODO: insert is only for external nodes, merge is the version for internal ones
+
+
 BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
     //type set and check of split is done by BPtree_insert
     
@@ -74,6 +83,9 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
         KVpair_free(tmpKV);
     }
 
+    //TODO: if i free the node, how do i link to its parent?
+    //-the callee is responsible for linking
+    BPtreeNode_free(node);
     return newNode;
 }
 
@@ -130,8 +142,11 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
 }
 
 //To be used with split. Merges splited 'node' with its parent
-void BPtreeNode_merge(BPtreeNode *node, BPtreeNode *p){
+BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *p){
     //expects node to be of size 1, coming from a split
+    //expects node and p to be internal nodes
+    
+    //TODO: for immutable data, i need grandparent node to link to new merged parent
     
     //insert node to parent 
     

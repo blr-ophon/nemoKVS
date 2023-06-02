@@ -19,8 +19,9 @@
 //-each page contains a node
 //
 enum NODE_TYPE{
-    NT_INT,         //internal 
-    NT_EXT          //external
+    NT_INT,          //internal 
+    NT_EXT,          //external
+    NT_ROOT
 };
 
 
@@ -39,7 +40,7 @@ void BPtreeNode_free(BPtreeNode *node);
 BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv);
 
 BPtreeNode *BPtreeNode_split(struct BPtreeNode *node);
-void BPtreeNode_merge(BPtreeNode *node, BPtreeNode *p);
+BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *p);
 
 KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx);
 void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv);

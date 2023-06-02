@@ -19,7 +19,7 @@ typedef struct{
 BPtree *BPtree_create(uint8_t degree);
 void BPtree_free(BPtree *ptr);
 
-bool BPtree_insert(BPtree *tree, BPtreeNode *node, KVpair *kv);
+bool BPtree_insertR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv);
 BPtreeNode *BPtree_search(BPtree *btree, uint32_t key, int *idx);
 
 #endif

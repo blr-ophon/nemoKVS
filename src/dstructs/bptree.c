@@ -1,16 +1,16 @@
 #include "bptree.h"
 
-#define BTREE_PAGE_SIZE     4096
-#define BTREE_MAX_KEY_SIZE  1000
-#define BTREE_MAX_VAL_SIZE  3000
-
 
 
 BPtree *BPtree_create(uint8_t degree){
     BPtree *rv = malloc(sizeof(BPtree));
-
-    rv->root = BPtreeNode_create(degree);
     rv->degree = degree;
+
+    //master root
+    rv->root = BPtreeNode_create(0);
+    rv->root->type = NT_ROOT;
+    rv->root->nkeys = 0;
+    rv->root->children[0] = NULL;       //tree root
 
     return rv;
 }
@@ -63,34 +63,58 @@ static int NextChildIDX(BPtreeNode *node, KVpair *kv){
         //none of the cases:
         //key is bigger than current and next node key increment i and continue
     }
+    
+    return 0;
 }
 
-bool BPtree_insert(BPtree *tree, BPtreeNode *node, KVpair *kv){
+bool BPtree_insertR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
     bool split = false;
     if(!node){
         return false;
     }
 
     if(node->type == NT_EXT){
-        BPtreeNode_insert(node, kv);
+        //insert kv
+        BPtreeNode *inserted = BPtreeNode_insert(node, kv);
+        node = inserted;
+        //link parent to new node with inserted value
+        p->children[NextChildIDX(p, kv)] = inserted;
+
     }else{
         //next children
         BPtreeNode *next = node->children[NextChildIDX(node, kv)];
-        split = BPtree_insert(tree, next, kv);
+        split = BPtree_insertR(tree, next, node, kv);
     }
 
-    //merge if a split happened
     if(split){
-        //merge
+        //merge node with it`s child that splitted
+        BPtreeNode *splittedChild = node->children[NextChildIDX(node,kv)];
+        BPtreeNode *merged = BPtreeNode_merge(splittedChild, node);
+        //link parent to new merged node
+        p->children[NextChildIDX(p, kv)] = merged;
     }
 
     //if insert or merging makes node full
     if(node->nkeys >= tree->degree){
         //split
+        BPtreeNode *splitted = BPtreeNode_split(node);
+        //link parent to new splitted node
+        p->children[NextChildIDX(p, kv)] = splitted;
         split = true;
     }
 
     return split;
+}
+
+void BPtree_insert(BPtree *tree, KVpair *kv){
+    if(!tree->root->children[0]){
+        //Empty tree. Create first node and insert KV
+        tree->root->children[0] = BPtreeNode_create(1);
+        BPtreeNode_insert(tree->root->children[0], kv);
+        return;
+    }
+
+    BPtree_insertR(tree, tree->root, tree->root->children[0], kv);
 }
 
 //returns node pointer and the id of the key in idx
