@@ -1,6 +1,7 @@
 #ifndef KVPAIR_H
 #define KVPAIR_H
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +13,9 @@ typedef struct{
     uint8_t *val;
 }KVpair;
 
+
+
+void KVpair_print(KVpair *kv);
 
 KVpair *KVpair_create(uint32_t klen, uint32_t vlen, char *key, void *val);
 void KVpair_free(KVpair *ptr);

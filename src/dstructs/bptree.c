@@ -1,6 +1,18 @@
 #include "bptree.h"
 
 
+void BPtree_print(BPtree *tree){
+    if(!tree){
+        printf("> Empty tree\n");
+        return;
+    }
+    printf("\n==== NODE ====\n");
+    printf("Degree: %d\n", tree->degree); 
+    printf("Root: \n");
+    BPtreeNode_print(tree->root);
+    //TODO: print all nodes of the tree in order
+}
+
 BPtree *BPtree_create(uint8_t degree){
     BPtree *rv = malloc(sizeof(BPtree));
     rv->degree = degree;

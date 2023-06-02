@@ -17,6 +17,8 @@ typedef struct{
     //root 
 }BPtree;
 
+void BPtree_print(BPtree *tree);
+
 BPtree *BPtree_create(uint8_t degree);
 void BPtree_free(BPtree *ptr);
 

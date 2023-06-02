@@ -1,5 +1,20 @@
 #include "kvpair.h"
 
+void KVpair_print(KVpair *kv){
+    if(!kv){
+        printf("> Empty KV pair\n");
+        return;
+    }
+    printf("\n= KVpair:\n");
+    printf("\n---- KV pair ----\n");
+    printf("%u (klen) %u (vlen)\n", kv->klen, kv->vlen);
+    printf("KEY: %s\nVAL: ", kv->key);          //TODO: use safer function
+    for(uint32_t i = 0; i < kv->vlen; i++){
+        printf("%c" ,kv->val[i]);
+    }
+    printf("\n");
+}
+
 KVpair *KVpair_create(uint32_t klen, uint32_t vlen, char *key, void *val){
     KVpair *kv = malloc(sizeof(KVpair));
 

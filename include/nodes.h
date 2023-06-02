@@ -28,11 +28,14 @@ enum NODE_TYPE{
 typedef struct BPtreeNode{
     uint16_t type;                   //internal or external
     uint16_t nkeys;                  //number of keys
+    size_t dataSize;                 //size of key_values in bytes
     struct BPtreeNode **children;    //Array of pointers to children
     uint16_t *keyOffsets;            //Array of offsets to key values
     uint8_t *key_values;             //array of bytes with key values
 }BPtreeNode;
 
+
+void BPtreeNode_print(BPtreeNode *node);
 
 BPtreeNode *BPtreeNode_create(uint8_t n);
 void BPtreeNode_free(BPtreeNode *node);

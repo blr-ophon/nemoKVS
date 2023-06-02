@@ -9,6 +9,46 @@ static void assert_page(BPtreeNode *node){
     //assert node fits in a page
 }
 
+void BPtreeNode_print(BPtreeNode *node){
+    if(!node){
+        printf("> Empty node\n");
+        return;
+    }
+    printf("\n==== NODE ====\n");
+    printf("type: ");
+    switch(node->type){
+        case NT_INT:
+            printf("Internal\n");
+            break;
+        case NT_EXT:
+            printf("External\n");
+            break;
+        case NT_ROOT:
+            printf("Root\n");
+            break;
+        default:
+            printf("????\n");
+            break;
+    }
+    printf("No. of keys: %u\n", node->nkeys);
+    printf("Child links: ");
+    for(uint32_t i = 0; i < node->nkeys+1; i++){
+        printf("%lx | ", (uint64_t) node->children[i]);
+    }
+    printf("\nKey offsets: ");
+    for(uint32_t i = 0; i < node->nkeys; i++){
+        printf("%x | ", node->keyOffsets[i]);
+    }
+    printf("\nKV pairs dump: ");
+    for(uint32_t i = 0; i < node->dataSize; i++){
+        if(node->dataSize % 8 == 0){
+            printf("\n");
+        }
+        printf("%c ", node->key_values[i]);
+    }
+    printf("\n\n");
+}
+
 
 //create a node with size n
 BPtreeNode *BPtreeNode_create(uint8_t nkeys){
@@ -84,8 +124,6 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
         KVpair_free(tmpKV);
     }
 
-    //TODO: if i free the node, how do i link to its parent?
-    //-the callee is responsible for linking
     BPtreeNode_free(node);
     return newNode;
 }
@@ -176,6 +214,7 @@ BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *splitted){
 }
 
 KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){
+    assert(node->keyOffsets);
     return KVpair_decode(&node->key_values[node->keyOffsets[idx]]);
 }
 
@@ -185,6 +224,9 @@ void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
     //keyOffsets[0] is set to 0 in node creation
     uint16_t offset = node->keyOffsets[idx]; 
     size_t kv_size = KVpair_getSize(kv);
+
+    node->dataSize += kv_size;
+    node->key_values = realloc(node->key_values, node->dataSize);
 
     uint8_t *bytestream = KVpair_encode(kv);
     memcpy(&node->key_values[offset], bytestream, kv_size);
