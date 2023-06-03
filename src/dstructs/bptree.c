@@ -51,6 +51,7 @@ static int NextChildIDX(BPtreeNode *node, KVpair *kv){
 
         KVpair *crntKV = BPtreeNode_getKV(node, i);
         KVpair *nextKV = BPtreeNode_getKV(node, i+1);
+        if(!nextKV) return 1;
 
         //if kv inferior to current kv
         if(KVpair_compare(kv, crntKV) < 0){

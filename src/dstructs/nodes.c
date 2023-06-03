@@ -38,14 +38,15 @@ void BPtreeNode_print(BPtreeNode *node){
     }
     printf("\nKey offsets: ");
     for(uint32_t i = 0; i < node->nkeys; i++){
-        printf("%x | ", node->keyOffsets[i]);
+        printf("%#x(%d) | ", node->keyOffsets[i], node->keyOffsets[i]);
     }
     printf("\nKV pairs dump: ");
     for(uint32_t i = 0; i < node->dataSize; i++){
         if(i % 16 == 0){
             printf("\n");
         }
-        printf("%c ", node->key_values[i]);
+        printf("%x ", node->key_values[i]);
+        //printf("%x(%c) ", node->key_values[i], node->key_values[i]);
     }
     printf("\n\n");
 }
@@ -179,7 +180,7 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     //create parent node 
     BPtreeNode *p = BPtreeNode_create(1);
     p->type = NT_INT;
-    KVpair *p_kv = BPtreeNode_getKV(node, (node->nkeys)/2 - !odd);
+    KVpair *p_kv = BPtreeNode_getKV(node, (node->nkeys)/2);
     KVpair_removeVal(p_kv);
     BPtreeNode_appendKV(p, 0, p_kv);
     KVpair_free(p_kv);
@@ -249,6 +250,7 @@ KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){
     return KVpair_decode(&node->key_values[node->keyOffsets[idx]]);
 }
 
+//Overwrites key
 void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
     //assert(node->type == NT_EXT);
     //expects keyoffsets[idx] to be previously filled by previous node

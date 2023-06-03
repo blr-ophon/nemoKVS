@@ -34,7 +34,7 @@ void KVpair_free(KVpair *ptr){
     if(ptr){
         if(ptr->key) free(ptr->key);
         if(ptr->val) free(ptr->val);
-        if(ptr) free(ptr);
+        free(ptr);
     }
 }
 
@@ -81,7 +81,10 @@ uint8_t *KVpair_encode(KVpair *kv){
 
 void KVpair_removeVal(KVpair *kv){
     kv->vlen = 0;
-    if(kv->val) free(kv->val);
+    if(kv->val) {
+        free(kv->val);
+        kv->val = NULL;
+    }
 }
 
 
