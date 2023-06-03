@@ -42,41 +42,17 @@ void BPtree_free(BPtree *ptr){
 
 //returns ID of the next child. Used to traverse the tree
 static int NextChildIDX(BPtreeNode *node, KVpair *kv){
+    //iterate through all kvs of node until kv is inferior to one of them
     for(int i = 0; i < node->nkeys; i++){
-        //key is bigger than every node key
-        if(i == node->nkeys){ 
-            //go to highest child
-            return i+1;
-        }
-
         KVpair *crntKV = BPtreeNode_getKV(node, i);
-        KVpair *nextKV = BPtreeNode_getKV(node, i+1);
-        if(!nextKV) return 1;
-
-        //if kv inferior to current kv
         if(KVpair_compare(kv, crntKV) < 0){
-            //go to left child
-            KVpair_free(crntKV);
-            KVpair_free(nextKV);
             return i;
         }
-
-        //kv is between kv i and i+1 of node
-        if(KVpair_compare(kv, crntKV) >= 0 && KVpair_compare(kv, nextKV) < 0){
-            //go to right child
-            KVpair_free(crntKV);
-            KVpair_free(nextKV);
-            return i+1;
-        }
-
         KVpair_free(crntKV);
-        KVpair_free(nextKV);
-
-        //none of the cases:
-        //key is bigger than current and next node key increment i and continue
     }
-    
-    return 0;
+
+    //kv superior to all node kvs
+    return node->nkeys;
 }
 
 static bool BPtree_insertR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){

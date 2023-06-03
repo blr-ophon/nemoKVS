@@ -10,11 +10,11 @@ static void assert_page(BPtreeNode *node){
 }
 
 void BPtreeNode_print(BPtreeNode *node){
+    printf("\n==== NODE ====\n");
     if(!node){
         printf("> Empty node\n");
         return;
     }
-    printf("\n==== NODE ====\n");
     printf("type: ");
     switch(node->type){
         case NT_INT:

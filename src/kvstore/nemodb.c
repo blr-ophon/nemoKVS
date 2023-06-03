@@ -45,12 +45,17 @@ int main(void){
     KVpair * kv5 = KVpair_create(1, 10, "5", "test-VAL5");
     KVpair * kv6 = KVpair_create(1, 10, "6", "test-VAL5");
     KVpair * kv7 = KVpair_create(1, 10, "7", "test-VAL5");
-    BPtree_insert(tree, kv1);
-    BPtree_insert(tree, kv2);
-    BPtree_insert(tree, kv3);
-    BPtree_insert(tree, kv4);
-    BPtree_insert(tree, kv5);
+    //BPtree_insert(tree, kv1);
+    //BPtree_insert(tree, kv2);
+    //BPtree_insert(tree, kv3);
+    //BPtree_insert(tree, kv4);
+    //BPtree_insert(tree, kv5);
     BPtree_insert(tree, kv6);
+    BPtree_insert(tree, kv5);
+    BPtree_insert(tree, kv4);
+    BPtree_insert(tree, kv3);
+    BPtree_insert(tree, kv2);
+    //BPtree_insert(tree, kv1);
 
     BPtreeNode_print(tree->root->children[0]);
     BPtreeNode_print(tree->root->children[0]->children[0]);
