@@ -209,33 +209,34 @@ BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *splitted){
     //TODO: read all tmpKVs to an array
     //insert splitted to node
     KVpair *splittedKV = BPtreeNode_getKV(splitted, 0);
-    BPtreeNode *merged = BPtreeNode_insert(node, splittedKV, NULL);
+    int idx = 0;
+    BPtreeNode *merged = BPtreeNode_insert(node, splittedKV, &idx);
 
     //find which children will receive the children of splitted
-    int child_idx = -1;
-    int splittted_child_idx = 0;
-    for(int i = 0; i < merged->nkeys; i++){
-        KVpair *tmpKV = BPtreeNode_getKV(merged, i);
-        //if splittedKV superior to tmpKV
-        if(KVpair_compare(splittedKV, tmpKV) > 0){
-            child_idx = i;
-            KVpair_free(tmpKV);
-            break;
-        }
+    //int child_idx = -1;
+    //int splittted_child_idx = 0;
+    //for(int i = 0; i < merged->nkeys; i++){
+    //    KVpair *tmpKV = BPtreeNode_getKV(merged, i);
+    //    //if splittedKV superior to tmpKV
+    //    if(KVpair_compare(splittedKV, tmpKV) > 0){
+    //        child_idx = i;
+    //        KVpair_free(tmpKV);
+    //        break;
+    //    }
 
-        //child not related to inserted value
-        merged->children[i] = splitted->children[splittted_child_idx++];   
+    //    //child not related to inserted value
+    //    merged->children[i] = splitted->children[splittted_child_idx++];   
 
-        KVpair_free(tmpKV);
-    }
-    KVpair_free(splittedKV);
+    //    KVpair_free(tmpKV);
+    //}
+    //KVpair_free(splittedKV);
 
-    if(child_idx == -1){    //splittedKV superior to all kvs of node
-        child_idx = merged->nkeys -1;
-    }
+    //if(child_idx == -1){    //splittedKV superior to all kvs of node
+    //    child_idx = merged->nkeys -1;
+    //}
 
-    merged->children[child_idx] = splitted->children[0];        //left child
-    merged->children[child_idx+1] = splitted->children[1];      //right child
+    merged->children[idx] = splitted->children[0];        //left child
+    merged->children[idx+1] = splitted->children[1];      //right child
     
     BPtreeNode_free(splitted);
     return merged;

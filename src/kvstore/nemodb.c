@@ -50,10 +50,12 @@ int main(void){
     BPtree_insert(tree, kv3);
     BPtree_insert(tree, kv4);
     BPtree_insert(tree, kv5);
+    BPtree_insert(tree, kv6);
 
     BPtreeNode_print(tree->root->children[0]);
     BPtreeNode_print(tree->root->children[0]->children[0]);
     BPtreeNode_print(tree->root->children[0]->children[1]);
+    BPtreeNode_print(tree->root->children[0]->children[2]);
     //DB_create("test_db");
     //Database *db = DB_load("test_db");
     //if(!db){
