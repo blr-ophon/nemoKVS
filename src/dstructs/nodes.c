@@ -166,6 +166,7 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     //first half
     //create node
     BPtreeNode *Lnode = BPtreeNode_create(node->nkeys/2);
+    Lnode->type = node->type;
     for(i = 0; i < (node->nkeys)/2; i++){
         //insert data from old to new node
         KVpair *tmpKV = BPtreeNode_getKV(node, i);
@@ -173,31 +174,31 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
         KVpair_free(tmpKV);
     }
     memcpy(Lnode->children, node->children, (node->nkeys)/2);
-    Lnode->type = node->type;
 
 
     //create parent node 
     BPtreeNode *p = BPtreeNode_create(1);
+    p->type = NT_INT;
     KVpair *p_kv = BPtreeNode_getKV(node, (node->nkeys)/2 - !odd);
     KVpair_removeVal(p_kv);
     BPtreeNode_appendKV(p, 0, p_kv);
     KVpair_free(p_kv);
-    p->type = NT_INT;
 
 
     //second half
     //create node
     BPtreeNode *Rnode = BPtreeNode_create(node->nkeys/2 + odd - internal);
+    Rnode->type = node->type;
     i+= internal;   
+    int RNode_idx = 0;
     for(; i < node->nkeys; i++){
         //insert data from old to new node
         KVpair *tmpKV = BPtreeNode_getKV(node, i);
-        BPtreeNode_appendKV(Rnode, i, tmpKV);
+        BPtreeNode_appendKV(Rnode, RNode_idx++, tmpKV);
         KVpair_free(tmpKV);
     }
     int half = (node->nkeys)/2;
     memcpy(Rnode->children, &node->children[half], half + odd - internal);
-    Rnode->type = node->type;
 
     //link parent node to 2 children
     p->children[0] = Lnode;
@@ -249,7 +250,7 @@ KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){
 }
 
 void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
-    assert(node->type == NT_EXT);
+    //assert(node->type == NT_EXT);
     //expects keyoffsets[idx] to be previously filled by previous node
     //- keyOffsets[0] is set to 0 in node creation
     uint16_t offset = node->keyOffsets[idx]; 
