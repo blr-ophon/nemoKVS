@@ -43,24 +43,23 @@ int main(void){
     KVpair * kv3 = KVpair_create(1, 10, "3", "test-VAL3");
     KVpair * kv4 = KVpair_create(1, 10, "4", "test-VAL4");
     KVpair * kv5 = KVpair_create(1, 10, "5", "test-VAL5");
-    KVpair * kv6 = KVpair_create(1, 10, "6", "test-VAL5");
-    KVpair * kv7 = KVpair_create(1, 10, "7", "test-VAL5");
-    //BPtree_insert(tree, kv1);
-    //BPtree_insert(tree, kv2);
-    //BPtree_insert(tree, kv3);
-    //BPtree_insert(tree, kv4);
-    //BPtree_insert(tree, kv5);
-    BPtree_insert(tree, kv6);
+    KVpair * kv6 = KVpair_create(1, 10, "6", "test-VAL6");
+    KVpair * kv7 = KVpair_create(1, 10, "7", "test-VAL7");
+    KVpair * kv8 = KVpair_create(1, 10, "8", "test-VAL8");
+    BPtree_insert(tree, kv1);
+    BPtree_insert(tree, kv7);
     BPtree_insert(tree, kv5);
     BPtree_insert(tree, kv4);
-    BPtree_insert(tree, kv3);
+    BPtree_insert(tree, kv6);
     BPtree_insert(tree, kv2);
-    //BPtree_insert(tree, kv1);
+    BPtree_insert(tree, kv3);
+    BPtree_insert(tree, kv8);
 
     BPtreeNode_print(tree->root->children[0]);
     BPtreeNode_print(tree->root->children[0]->children[0]);
     BPtreeNode_print(tree->root->children[0]->children[1]);
     BPtreeNode_print(tree->root->children[0]->children[2]);
+    BPtreeNode_print(tree->root->children[0]->children[3]);
     //DB_create("test_db");
     //Database *db = DB_load("test_db");
     //if(!db){

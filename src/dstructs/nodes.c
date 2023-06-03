@@ -83,7 +83,6 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
 
     //create a copy of the node with inserted value
     BPtreeNode *newNode = BPtreeNode_create(node->nkeys + 1);
-    newNode->children[0] = node->children[0];
     newNode->type = node->type;
 
     if(node->nkeys == 0){
@@ -93,51 +92,33 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
         return newNode;
     }
 
-    //Iterate through all kvs of node. when one superior to kv is found, append kv
+    //read all kvs and save the position of kv
+    int newKVpos = 0;   //is kv is not bigger than any kv of node, it is before all, in 0
     KVpair **nodeKVs = calloc(node->nkeys, sizeof(KVpair*));
     for(int i = 0; i < node->nkeys; i++){
         nodeKVs[i] = BPtreeNode_getKV(node, i);
+        if(KVpair_compare(kv, nodeKVs[i]) >= 0){
+            newKVpos = i+1;
+        }
     }
+    if(idx) *idx = newKVpos;
 
-    bool kvInserted = false;
-    int kv_idx = 0;
-
+    newNode->children[0] = node->children[0];
+    int kv_idx = 0; //increased every time a kv pair from node is appended
     for(int i = 0; i < newNode->nkeys; i++){
-        if(kvInserted){ //after kv is inserted, no comparisons are needed
-            //append child and key value of nodeKVS[i]
-            newNode->children[i+1] = node->children[kv_idx];
-            BPtreeNode_appendKV(newNode, i, nodeKVs[kv_idx++]);
-            continue;
-        }
-
-        //kv is superior to all kvs in node. All kvs from node were already appended.
-        //special case because tmpKV is NULL and cant be compared
-        if(kv_idx == node->nkeys){ 
-            //append child and key value
-            newNode->children[i+1] = NULL;
+        if(i == newKVpos){ //append kv
             BPtreeNode_appendKV(newNode, i, kv);
-            if(idx) *idx = i;
-            break;
-        }
-
-        //kv is inferior to tmpKV OR kv is the last key. Append kv
-        if(KVpair_compare(kv,nodeKVs[kv_idx]) < 0){
-            //append child and key value 
-            if(i == 0){ //kv is inferior to all kvs in node
-                newNode->children[0] = NULL;
-                newNode->children[1] = node->children[0];
+            if(i == 0){ //only case where the empty node comes before the inserted kv
+                newNode->children[i] = NULL;
             }else{
                 newNode->children[i+1] = NULL;
             }
-            BPtreeNode_appendKV(newNode, i, kv);
-            kvInserted = true;
-            if(idx) *idx = i;
             continue;
         }
-
-        //kv is superior to nodeKV[i] (but is not last the key). Append nodeKV[i]
-        newNode->children[i+1] = node->children[kv_idx];
-        BPtreeNode_appendKV(newNode, i, nodeKVs[kv_idx++]);
+        //append old kvs
+        BPtreeNode_appendKV(newNode, i, nodeKVs[kv_idx]);
+        newNode->children[i+1] = node->children[kv_idx+1];
+        kv_idx++;
     }
 
     for(int i = 0; i < node->nkeys; i++){
