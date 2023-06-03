@@ -85,7 +85,7 @@ static bool BPtree_insertR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair
 
     if(node->type == NT_EXT){
         //insert kv
-        BPtreeNode *inserted = BPtreeNode_insert(node, kv);
+        BPtreeNode *inserted = BPtreeNode_insert(node, kv, NULL);
         inserted->type = NT_EXT;
         node = inserted;
         //link parent to new node with inserted value

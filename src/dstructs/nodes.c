@@ -76,7 +76,7 @@ void BPtreeNode_free(BPtreeNode *node){
 
 
 
-BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
+BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     if(!node){
         node = BPtreeNode_create(0);
     }
@@ -93,65 +93,57 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv){
         return newNode;
     }
 
-
     //Iterate through all kvs of node. when one superior to kv is found, append kv
+    KVpair **nodeKVs = calloc(node->nkeys, sizeof(KVpair*));
+    for(int i = 0; i < node->nkeys; i++){
+        nodeKVs[i] = BPtreeNode_getKV(node, i);
+    }
+
     bool kvInserted = false;
-    int tmpkv_idx = 0;
+    int kv_idx = 0;
+
     for(int i = 0; i < newNode->nkeys; i++){
-        KVpair *tmpKV = BPtreeNode_getKV(node, tmpkv_idx);
-
-        //after kv is inserted, no comparisons are needed
-        if(kvInserted){
-            //append child to children array
-            newNode->children[i+1] = node->children[tmpkv_idx];
-
-            //append tmpkv pair and offset 
-            BPtreeNode_appendKV(newNode, i, tmpKV);
-            tmpkv_idx++;
-            KVpair_free(tmpKV);
+        if(kvInserted){ //after kv is inserted, no comparisons are needed
+            //append child and key value of nodeKVS[i]
+            newNode->children[i+1] = node->children[kv_idx];
+            BPtreeNode_appendKV(newNode, i, nodeKVs[kv_idx++]);
             continue;
         }
 
         //kv is superior to all kvs in node. All kvs from node were already appended.
         //special case because tmpKV is NULL and cant be compared
-        if(tmpkv_idx == node->nkeys){ 
-            //append child to children array (empty)
+        if(kv_idx == node->nkeys){ 
+            //append child and key value
             newNode->children[i+1] = NULL;
-
-            //append kv pair and offset 
             BPtreeNode_appendKV(newNode, i, kv);
-            KVpair_free(tmpKV);
-            continue;
+            if(idx) *idx = i;
+            break;
         }
 
-
         //kv is inferior to tmpKV OR kv is the last key. Append kv
-        if(KVpair_compare(kv,tmpKV) < 0){
-            //append child to children array 
+        if(KVpair_compare(kv,nodeKVs[kv_idx]) < 0){
+            //append child and key value 
             if(i == 0){ //kv is inferior to all kvs in node
                 newNode->children[0] = NULL;
                 newNode->children[1] = node->children[0];
             }else{
                 newNode->children[i+1] = NULL;
             }
-
-            //append kv pair and offset 
             BPtreeNode_appendKV(newNode, i, kv);
-            KVpair_free(tmpKV);
             kvInserted = true;
+            if(idx) *idx = i;
             continue;
         }
 
-        //kv is superior to tmpKVm (but is not last the key). Append tmpKV
-
-        //append child to children array
-        newNode->children[i+1] = node->children[tmpkv_idx];
-
-        //append tmpkv pair and offset 
-        BPtreeNode_appendKV(newNode, i, tmpKV);
-        tmpkv_idx++;
-        KVpair_free(tmpKV);
+        //kv is superior to nodeKV[i] (but is not last the key). Append nodeKV[i]
+        newNode->children[i+1] = node->children[kv_idx];
+        BPtreeNode_appendKV(newNode, i, nodeKVs[kv_idx++]);
     }
+
+    for(int i = 0; i < node->nkeys; i++){
+        KVpair_free(nodeKVs[i]);
+    }
+    free(nodeKVs);
 
     BPtreeNode_free(node);
     return newNode;
@@ -214,19 +206,26 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
 //expects splitted to be of size 1, coming from a split
 //expects splitted and node to be internal nodes
 BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *splitted){
+    //TODO: read all tmpKVs to an array
     //insert splitted to node
     KVpair *splittedKV = BPtreeNode_getKV(splitted, 0);
-    BPtreeNode *merged = BPtreeNode_insert(node, splittedKV);
+    BPtreeNode *merged = BPtreeNode_insert(node, splittedKV, NULL);
 
     //find which children will receive the children of splitted
     int child_idx = -1;
+    int splittted_child_idx = 0;
     for(int i = 0; i < merged->nkeys; i++){
-        KVpair *tmpKV = BPtreeNode_getKV(splitted, i);
-        if(KVpair_compare(splittedKV, tmpKV) < 0){
+        KVpair *tmpKV = BPtreeNode_getKV(merged, i);
+        //if splittedKV superior to tmpKV
+        if(KVpair_compare(splittedKV, tmpKV) > 0){
             child_idx = i;
             KVpair_free(tmpKV);
             break;
         }
+
+        //child not related to inserted value
+        merged->children[i] = splitted->children[splittted_child_idx++];   
+
         KVpair_free(tmpKV);
     }
     KVpair_free(splittedKV);

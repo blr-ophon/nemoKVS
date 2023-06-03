@@ -50,7 +50,6 @@ int main(void){
     BPtree_insert(tree, kv3);
     BPtree_insert(tree, kv4);
     BPtree_insert(tree, kv5);
-    BPtree_insert(tree, kv6);
 
     BPtreeNode_print(tree->root->children[0]);
     BPtreeNode_print(tree->root->children[0]->children[0]);
