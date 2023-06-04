@@ -60,7 +60,16 @@ int main(void){
     BPtree_insert(tree, kv9);
     BPtree_insert(tree, kva);
 
+    BPtree_delete(tree, kv1);
     BPtree_delete(tree, kv2);
+    //BPtree_delete(tree, kv3);
+    //BPtree_delete(tree, kv4);
+    BPtree_delete(tree, kv5);
+    BPtree_delete(tree, kv6);
+    //BPtree_delete(tree, kv7);
+    //BPtree_delete(tree, kv9);
+    //BPtree_delete(tree, kv9);
+    //BPtree_delete(tree, kva);
 
     if(BPtree_search(tree, kv1, NULL)) printf("kv1 found\n");
     if(BPtree_search(tree, kv2, NULL)) printf("kv2 found\n");

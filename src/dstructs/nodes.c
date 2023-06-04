@@ -146,7 +146,61 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     return newNode;
 }
 
+//shrink a node with an empty child
+BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
+    /*
+     * I almost went insane for errors caused by this simple thing. I
+     * know it's ugly with all these loops, but it works... for now
+     */
+
+    //indexes of node and child marked for deletion
+    int del_kv_idx;
+    if(del_child_idx == 0){
+        del_kv_idx = 0;
+    }else{
+        del_kv_idx = del_child_idx -1;
+    }
+
+    int nkeys = node->nkeys;
+    BPtreeNode *newNode = BPtreeNode_create(nkeys -1);
+    newNode->type = node->type;
+
+    KVpair **nodeKVs = calloc(nkeys, sizeof(KVpair*));
+    for(int i = 0; i < nkeys; i++){
+        nodeKVs[i] = BPtreeNode_getKV(node, i);
+    }
+
+    int i = 0;          //index for traversing the old node
+    int nn_i = 0;       //index for insertion in new node
+    for(; i < node->nkeys; i++ ){
+        //append or skip kv
+        if(i != del_kv_idx){
+            BPtreeNode_appendKV(newNode, nn_i, nodeKVs[i]);
+            nn_i++;
+        }
+    }
+
+    i = 0; nn_i = 0;
+    for(; i < node->nkeys+1; i++ ){
+        //append or skip child 
+        if(i != del_child_idx){
+            newNode->children[nn_i] = node->children[i];
+            nn_i++;
+        }
+    }
+
+    for(int i = 0; i < nkeys; i++){
+        KVpair_free(nodeKVs[i]);
+    }
+    free(nodeKVs);
+    return newNode;
+}
+
+//Delete kv of a node. Only works for childless (external) nodes
 BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv){
+    if(!node) return NULL;
+    if(node->nkeys == 0) return NULL;
+
     //create a smaller copy of the node 
     int nkeys = node->nkeys;
     BPtreeNode *newNode = BPtreeNode_create(nkeys -1);
@@ -161,20 +215,25 @@ BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv){
         }
     }
 
-    if(delKVpos != -1){
+    if(delKVpos != -1){ 
         //append all old kvs to new node except the deleted one
         int kv_idx = 0;
-        for(int i = 0; i < newNode->nkeys; i++){
+        int i = 0;
+        if(delKVpos == 0) i = 1;
+
+        for(; i < node->nkeys; i++){
             if(i == delKVpos){
-                kv_idx++;       //skip the deleted kv
+                continue;
             }
-            //append node kvs
-            BPtreeNode_appendKV(newNode, i, nodeKVs[kv_idx]);
-            newNode->children[i+1] = node->children[kv_idx+1];
+            BPtreeNode_appendKV(newNode, kv_idx, nodeKVs[i]);
+            //newNode->children[kv_idx] = node->children[i];
             kv_idx++;
         }
+        //if(delKVpos == node->nkeys-1) i--;  //special case for last node
+        //newNode->children[newNode->nkeys] = node->children[i];
         BPtreeNode_free(node);
     }else{
+        //no kv found
         BPtreeNode_free(newNode);
         newNode = NULL;
     }
@@ -195,7 +254,6 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     bool odd = (node->nkeys % 2 != 0);
 
     //first half
-    //create node
     BPtreeNode *Lnode = BPtreeNode_create(node->nkeys/2);
     Lnode->type = node->type;
     for(i = 0; i < (node->nkeys)/2; i++){
@@ -216,7 +274,6 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     KVpair_free(p_kv);
 
     //second half
-    //create node
     BPtreeNode *Rnode = BPtreeNode_create(node->nkeys/2 + odd - internal);
     Rnode->type = node->type;
     i+= internal;   

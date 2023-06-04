@@ -143,10 +143,9 @@ bool BPtree_deleteR(BPtreeNode *node, BPtreeNode *p, KVpair *kv){
     }
 
     if(emptyChild){ //shrink internal node by removing one of its kvs 
-        //find which kv to remove
+        //find the empty child
         int child_idx = NextChildIDX(node,kv);
-        KVpair *kv = BPtreeNode_getKV(node, child_idx);   
-        BPtreeNode *shrinked = BPtreeNode_delete(node, kv);  
+        BPtreeNode *shrinked = BPtreeNode_shrink(node, child_idx);  
         //link to parent 
         p->children[NextChildIDX(p, kv)] = shrinked;
         node = shrinked;

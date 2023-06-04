@@ -46,6 +46,7 @@ BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv);
 
 BPtreeNode *BPtreeNode_split(struct BPtreeNode *node);
 BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *splitted);
+BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int child_idx);
 
 KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx);
 void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv);
