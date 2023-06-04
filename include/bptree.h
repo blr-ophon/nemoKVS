@@ -23,6 +23,6 @@ BPtree *BPtree_create(uint8_t degree);
 void BPtree_free(BPtree *ptr);
 
 void BPtree_insert(BPtree *tree, KVpair *kv);
-BPtreeNode *BPtree_search(BPtree *btree, uint32_t key, int *idx);
+BPtreeNode *BPtree_search(BPtree *btree, KVpair *kv, int *idx);
 
 #endif
