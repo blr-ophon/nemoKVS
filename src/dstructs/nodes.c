@@ -4,6 +4,8 @@
 #define BTREE_MAX_KEY_SIZE  1000
 #define BTREE_MAX_VAL_SIZE  3000
 
+//TODO: external nodes dont need children links. Wasted space
+
 
 static void assert_page(BPtreeNode *node){
     //assert node fits in a page
@@ -15,6 +17,7 @@ void BPtreeNode_print(BPtreeNode *node){
         printf("> Empty node\n");
         return;
     }
+    printf("> %p\n", (void*) node);
     printf("type: ");
     switch(node->type){
         case NT_INT:
@@ -146,9 +149,9 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
         KVpair *tmpKV = BPtreeNode_getKV(node, i);
         BPtreeNode_appendKV(Lnode, i, tmpKV);
         KVpair_free(tmpKV);
+        Lnode->children[i] = node->children[i];
     }
-    memcpy(Lnode->children, node->children, (node->nkeys)/2);
-
+    Lnode->children[i] = node->children[i];
 
     //create parent node 
     BPtreeNode *p = BPtreeNode_create(1);
@@ -157,7 +160,6 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     KVpair_removeVal(p_kv);
     BPtreeNode_appendKV(p, 0, p_kv);
     KVpair_free(p_kv);
-
 
     //second half
     //create node
@@ -168,11 +170,12 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     for(; i < node->nkeys; i++){
         //insert data from old to new node
         KVpair *tmpKV = BPtreeNode_getKV(node, i);
-        BPtreeNode_appendKV(Rnode, RNode_idx++, tmpKV);
+        BPtreeNode_appendKV(Rnode, RNode_idx, tmpKV);
         KVpair_free(tmpKV);
+        Rnode->children[RNode_idx] = node->children[i];
+        RNode_idx++;
     }
-    int half = (node->nkeys)/2;
-    memcpy(Rnode->children, &node->children[half], half + odd - internal);
+    Rnode->children[RNode_idx] = node->children[i];
 
     //link parent node to 2 children
     p->children[0] = Lnode;
@@ -192,29 +195,6 @@ BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *splitted){
     KVpair *splittedKV = BPtreeNode_getKV(splitted, 0);
     int idx = 0;
     BPtreeNode *merged = BPtreeNode_insert(node, splittedKV, &idx);
-
-    //find which children will receive the children of splitted
-    //int child_idx = -1;
-    //int splittted_child_idx = 0;
-    //for(int i = 0; i < merged->nkeys; i++){
-    //    KVpair *tmpKV = BPtreeNode_getKV(merged, i);
-    //    //if splittedKV superior to tmpKV
-    //    if(KVpair_compare(splittedKV, tmpKV) > 0){
-    //        child_idx = i;
-    //        KVpair_free(tmpKV);
-    //        break;
-    //    }
-
-    //    //child not related to inserted value
-    //    merged->children[i] = splitted->children[splittted_child_idx++];   
-
-    //    KVpair_free(tmpKV);
-    //}
-    //KVpair_free(splittedKV);
-
-    //if(child_idx == -1){    //splittedKV superior to all kvs of node
-    //    child_idx = merged->nkeys -1;
-    //}
 
     merged->children[idx] = splitted->children[0];        //left child
     merged->children[idx+1] = splitted->children[1];      //right child
