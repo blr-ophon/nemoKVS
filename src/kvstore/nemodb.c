@@ -48,16 +48,20 @@ int main(void){
     KVpair * kv8 = KVpair_create(1, 10, "8", "test-VAL8");
     KVpair * kv9 = KVpair_create(1, 10, "9", "test-VAL9");
     KVpair * kva = KVpair_create(2, 10, "10", "test-VALA");
+
     BPtree_insert(tree, kv1);
     BPtree_insert(tree, kv2);
     BPtree_insert(tree, kv3);
-    //BPtree_insert(tree, kv4);
+    BPtree_insert(tree, kv4);
     BPtree_insert(tree, kv5);
     BPtree_insert(tree, kv6);
     BPtree_insert(tree, kv7);
     BPtree_insert(tree, kv8);
     BPtree_insert(tree, kv9);
     BPtree_insert(tree, kva);
+
+    BPtree_delete(tree, kv2);
+
     if(BPtree_search(tree, kv1, NULL)) printf("kv1 found\n");
     if(BPtree_search(tree, kv2, NULL)) printf("kv2 found\n");
     if(BPtree_search(tree, kv3, NULL)) printf("kv3 found\n");

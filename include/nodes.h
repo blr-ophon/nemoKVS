@@ -42,6 +42,7 @@ void BPtreeNode_free(BPtreeNode *node);
 
 int BPtreeNode_search(BPtreeNode* node, KVpair *kv);
 BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx);
+BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv);
 
 BPtreeNode *BPtreeNode_split(struct BPtreeNode *node);
 BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *splitted);

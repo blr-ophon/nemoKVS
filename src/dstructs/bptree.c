@@ -42,6 +42,7 @@ void BPtree_free(BPtree *ptr){
 
 //returns ID of the next child. Used to traverse the tree
 static int NextChildIDX(BPtreeNode *node, KVpair *kv){
+    //TODO: minimize use of this function in insert and delete
     //iterate through all kvs of node until kv is inferior to one of them
     for(int i = 0; i < node->nkeys; i++){
         KVpair *crntKV = BPtreeNode_getKV(node, i);
@@ -111,9 +112,9 @@ void BPtree_insert(BPtree *tree, KVpair *kv){
 }
 
 //returns node pointer and the id of the key in idx
-BPtreeNode *BPtree_search(BPtree *btree, KVpair *kv, int *idx){
+BPtreeNode *BPtree_search(BPtree *tree, KVpair *kv, int *idx){
     //traverse until reach an external node
-    BPtreeNode *tmp = btree->root;
+    BPtreeNode *tmp = tree->root;
     while(tmp->type != NT_EXT){
         tmp = tmp->children[NextChildIDX(tmp, kv)];
     }
@@ -123,4 +124,52 @@ BPtreeNode *BPtree_search(BPtree *btree, KVpair *kv, int *idx){
 
     if(idx) *idx = rv;
     return tmp;
+}
+
+bool BPtree_deleteR(BPtreeNode *node, BPtreeNode *p, KVpair *kv){
+    bool emptyChild = false;
+    if(node->type == NT_EXT){
+        //search kv pair and remove if it exists
+        BPtreeNode *deleted = BPtreeNode_delete(node, kv); 
+        if(!deleted) return false; //kv not found in node
+        //link to parent 
+        p->children[NextChildIDX(p,kv)] = deleted;
+        node = deleted;
+
+    }else{
+        //traverse next children
+        BPtreeNode *next = node->children[NextChildIDX(node, kv)];
+        emptyChild = BPtree_deleteR(next, node, kv);
+    }
+
+    if(emptyChild){ //shrink internal node by removing one of its kvs 
+        //find which kv to remove
+        int child_idx = NextChildIDX(node,kv);
+        KVpair *kv = BPtreeNode_getKV(node, child_idx);   
+        BPtreeNode *shrinked = BPtreeNode_delete(node, kv);  
+        //link to parent 
+        p->children[NextChildIDX(p, kv)] = shrinked;
+        node = shrinked;
+    }
+
+    //if deleting or shrinking makes node full
+    if(node->nkeys == 0){ //split
+        //free node and unlink from parent
+        BPtreeNode_free(node);
+        p->children[NextChildIDX(p, kv)] = NULL;
+        emptyChild = true;
+    }else{
+        emptyChild = false;
+    }
+
+    return emptyChild;
+}
+
+void BPtree_delete(BPtree *tree, KVpair *kv){
+    if(!tree) return;
+    if(!tree->root) return;
+    if(!tree->root->children[0]) return;
+
+    BPtreeNode *mroot = tree->root;
+    BPtree_deleteR(mroot->children[0], mroot, kv);
 }

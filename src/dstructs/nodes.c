@@ -146,6 +146,47 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     return newNode;
 }
 
+BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv){
+    //create a smaller copy of the node 
+    int nkeys = node->nkeys;
+    BPtreeNode *newNode = BPtreeNode_create(nkeys -1);
+    newNode->type = node->type;
+
+    int delKVpos = -1;   
+    KVpair **nodeKVs = calloc(nkeys, sizeof(KVpair*));
+    for(int i = 0; i < nkeys; i++){
+        nodeKVs[i] = BPtreeNode_getKV(node, i);
+        if(KVpair_compare(kv, nodeKVs[i]) == 0){
+            delKVpos = i;
+        }
+    }
+
+    if(delKVpos != -1){
+        //append all old kvs to new node except the deleted one
+        int kv_idx = 0;
+        for(int i = 0; i < newNode->nkeys; i++){
+            if(i == delKVpos){
+                kv_idx++;       //skip the deleted kv
+            }
+            //append node kvs
+            BPtreeNode_appendKV(newNode, i, nodeKVs[kv_idx]);
+            newNode->children[i+1] = node->children[kv_idx+1];
+            kv_idx++;
+        }
+        BPtreeNode_free(node);
+    }else{
+        BPtreeNode_free(newNode);
+        newNode = NULL;
+    }
+
+    for(int i = 0; i < nkeys; i++){
+        KVpair_free(nodeKVs[i]);
+    }
+
+    free(nodeKVs);
+    return newNode;
+}
+
 
 //splits node and returns it's pointer. returned node must be merged with parent node
 BPtreeNode *BPtreeNode_split(BPtreeNode *node){
@@ -229,6 +270,10 @@ void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
     //assert(node->type == NT_EXT);
     //expects keyoffsets[idx] to be previously filled by previous node
     //- keyOffsets[0] is set to 0 in node creation
+    if(idx >= node->nkeys){
+        //TODO: set errno
+        return;
+    }
     uint16_t offset = node->keyOffsets[idx]; 
     size_t kv_size = KVpair_getSize(kv);
 
@@ -236,13 +281,6 @@ void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
     node->key_values = realloc(node->key_values, node->dataSize);
 
     uint8_t *bytestream = KVpair_encode(kv);
-    //for(uint32_t i = 0; i < kv_size; i++){
-    //    if(i % 16 == 0){
-    //        printf("\n");
-    //    }
-    //    printf("%d ", bytestream[i]);
-    //}
-    //printf("\n\n");
     memcpy(&node->key_values[offset], bytestream, kv_size);
 
     //appends offset for the next key
@@ -252,3 +290,4 @@ void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
 
     free(bytestream);
 }
+
