@@ -151,7 +151,7 @@ bool BPtree_deleteR(BPtreeNode *node, BPtreeNode *p, KVpair *kv){
         node = shrinked;
     }
 
-    //if deleting or shrinking makes node full
+    //if deleting or shrinking makes node empty 
     if(node->nkeys == 0){ //split
         //free node and unlink from parent
         BPtreeNode_free(node);
