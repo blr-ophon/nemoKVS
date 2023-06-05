@@ -51,9 +51,13 @@ BPtreeNode *shinBPT_borrow(BPtreeNode *dst, BPtreeNode *src, int dst_idx, bool f
 }
 
 //create a merged node with the nodes of inferior followed by superior. Reverse of split
+//TODO: Aparently different for external and internal nodes (parent does not drop in external)
 BPtreeNode *shinBPT_mergeINT(BPtreeNode *inferior, BPtreeNode *superior, BPtreeNode *p, int idx_from_p){
+    bool internal = inferior->type == NT_INT;
+
     //create node from node1, first kv of parent and node2  
-    BPtreeNode *merged = BPtreeNode_create(inferior->nkeys + 1 + superior->nkeys);
+    BPtreeNode *merged = BPtreeNode_create(inferior->nkeys + internal + superior->nkeys);
+    merged->type = inferior->type;
     int merged_idx = 0; //used to insert kvs and children in 'merged' node
     //inferior
     for(int i = 0; i < inferior->nkeys; i++, merged_idx++){
@@ -62,11 +66,16 @@ BPtreeNode *shinBPT_mergeINT(BPtreeNode *inferior, BPtreeNode *superior, BPtreeN
         KVpair_free(tmpKV);
         merged->children[merged_idx] = inferior->children[i];
     }
+
     //parent
-    KVpair *pKV = BPtreeNode_getKV(p, idx_from_p);
-    BPtreeNode_appendKV(merged, merged_idx++, pKV); 
-    KVpair_free(pKV);
-    merged->children[merged_idx] = p->children[idx_from_p];
+    //append parent kv to merged node if nodes are internal
+    if(internal){
+        KVpair *pKV = BPtreeNode_getKV(p, idx_from_p);
+        BPtreeNode_appendKV(merged, merged_idx++, pKV); 
+        KVpair_free(pKV);
+        merged->children[merged_idx] = p->children[idx_from_p];
+    }
+
     //superior
     for(int i = 0; i < superior->nkeys; i++, merged_idx++){
         KVpair *tmpKV = BPtreeNode_getKV(superior, i);
@@ -119,7 +128,8 @@ bool shinBPT_deleteR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
 
         //as parent. try giving from the left sibling to the node
         if(ptoc_idx != 0){  //left sibling does not exist
-            if(!isSmallNode(node->children[ptoc_idx-1], tree->degree/2 -1)){
+            //if(!isSmallNode(node->children[ptoc_idx-1], tree->degree/2 -1)){
+            if(node->children[ptoc_idx-1]->nkeys -1 >= tree->degree/2 -1){
 
                 BPtreeNode *updated = shinBPT_borrow(node->children[ptoc_idx], 
                         node->children[ptoc_idx-1], ptoc_idx, 0, node);
@@ -132,8 +142,8 @@ bool shinBPT_deleteR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
 
         //if left sibling too smal or inexistent, try the right sibling
         if(ptoc_idx != node->nkeys && !operationDone){
-            if(!isSmallNode(node->children[ptoc_idx+1], tree->degree/2 -1)){
-
+            //if(!isSmallNode(node->children[ptoc_idx+1], tree->degree/2 -1)){
+            if(node->children[ptoc_idx+1]->nkeys -1 >= tree->degree/2 -1){
                 BPtreeNode *updated = shinBPT_borrow(node->children[ptoc_idx], 
                         node->children[ptoc_idx+1], ptoc_idx, 1, node);
                 p->children[NextChildIDX(p,kv)] = updated;

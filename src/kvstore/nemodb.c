@@ -33,6 +33,10 @@
 //      -define errno constants
 //      -all db calls must return 0
 //      -one function prints the interpretation of errors
+//TODO: somewhere, malloc was being used incorrectly and causing random
+//segfaults (bptree, kvpair and node). Look for this.(all mallocs were in
+//kvpair.c except for 1 that was in tree or node, gotta look past commits 
+//to confirm where)
 
 
 int main(void){
@@ -63,8 +67,8 @@ int main(void){
 
     BPT_delete(tree, kv1);
     BPT_delete(tree, kv2);
-    //BPT_delete(tree, kv3);
-    //BPT_delete(tree, kv4);
+    BPT_delete(tree, kv3);
+    BPT_delete(tree, kv4);
     //BPT_delete(tree, kv5);
     //BPT_delete(tree, kv6);
     //BPT_delete(tree, kv7);
