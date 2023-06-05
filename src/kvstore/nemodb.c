@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include "nemodb.h"
+#include "delete.h"
 
 #define MAX_PATHNAME 64
 #define MAX_KEYNAME 64
@@ -60,12 +61,18 @@ int main(void){
     BPtree_insert(tree, kv9);
     BPtree_insert(tree, kva);
 
-    BPtree_delete(tree, kv1);
-    BPtree_delete(tree, kv2);
+    trueBPT_delete(tree, kv3);
+    trueBPT_delete(tree, kv4);
+    trueBPT_delete(tree, kv5);
+    trueBPT_delete(tree, kv6);
+
+
+    //BPtree_delete(tree, kv1);
+    //BPtree_delete(tree, kv2);
     //BPtree_delete(tree, kv3);
     //BPtree_delete(tree, kv4);
-    BPtree_delete(tree, kv5);
-    BPtree_delete(tree, kv6);
+    //BPtree_delete(tree, kv5);
+    //BPtree_delete(tree, kv6);
     //BPtree_delete(tree, kv7);
     //BPtree_delete(tree, kv9);
     //BPtree_delete(tree, kv9);
@@ -83,11 +90,11 @@ int main(void){
     //BPtreeNode_print(tree->root->children[0]->children[1]);
     //BPtreeNode_print(tree->root->children[0]->children[2]);
     //BPtreeNode_print(tree->root->children[0]->children[3]);
-    //BPtreeNode_print(tree->root->children[0]->children[0]->children[0]);
-    //BPtreeNode_print(tree->root->children[0]->children[0]->children[1]);
-    //BPtreeNode_print(tree->root->children[0]->children[0]->children[2]);
-    //BPtreeNode_print(tree->root->children[0]->children[1]->children[0]);
-    //BPtreeNode_print(tree->root->children[0]->children[1]->children[1]);
+    BPtreeNode_print(tree->root->children[0]->children[0]->children[0]);
+    BPtreeNode_print(tree->root->children[0]->children[0]->children[1]);
+    BPtreeNode_print(tree->root->children[0]->children[0]->children[2]);
+    BPtreeNode_print(tree->root->children[0]->children[1]->children[0]);
+    BPtreeNode_print(tree->root->children[0]->children[1]->children[1]);
     //DB_create("test_db");
     //Database *db = DB_load("test_db");
     //if(!db){

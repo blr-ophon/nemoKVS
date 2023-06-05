@@ -197,7 +197,7 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
 }
 
 //Delete kv of a node. Only works for childless (external) nodes
-BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv){
+BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
     if(!node) return NULL;
     if(node->nkeys == 0) return NULL;
 
@@ -214,6 +214,7 @@ BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv){
             delKVpos = i;
         }
     }
+    if(idx) *idx = delKVpos;
 
     if(delKVpos != -1){ 
         //append all old kvs to new node except the deleted one

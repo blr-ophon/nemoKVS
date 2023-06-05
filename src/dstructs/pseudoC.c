@@ -1,6 +1,4 @@
-#include "bptree.h"
-#include "bptree.c"
-
+/*
 typedef struct{
     KVpair *kv;
     bool smallNode;
@@ -65,3 +63,4 @@ delFlags trueBPT_deleteR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *
 
 void trueBPT_delete(BPtree *tree, KVpair *kv){
 }
+*/

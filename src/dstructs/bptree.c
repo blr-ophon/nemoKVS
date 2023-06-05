@@ -1,5 +1,8 @@
 #include "bptree.h"
 
+//TODO: when in external memory, the conditions for spliting and merging are the size of the page
+//instead of the number of keys
+
 
 void BPtree_print(BPtree *tree){
     if(!tree){
@@ -41,7 +44,7 @@ void BPtree_free(BPtree *ptr){
 }
 
 //returns ID of the next child. Used to traverse the tree
-static int NextChildIDX(BPtreeNode *node, KVpair *kv){
+int NextChildIDX(BPtreeNode *node, KVpair *kv){
     //TODO: minimize use of this function in insert and delete
     //iterate through all kvs of node until kv is inferior to one of them
     for(int i = 0; i < node->nkeys; i++){
@@ -130,7 +133,7 @@ bool BPtree_deleteR(BPtreeNode *node, BPtreeNode *p, KVpair *kv){
     bool emptyChild = false;
     if(node->type == NT_EXT){
         //search kv pair and remove if it exists
-        BPtreeNode *deleted = BPtreeNode_delete(node, kv); 
+        BPtreeNode *deleted = BPtreeNode_delete(node, kv, NULL); 
         if(!deleted) return false; //kv not found in node
         //link to parent 
         p->children[NextChildIDX(p,kv)] = deleted;
@@ -172,3 +175,4 @@ void BPtree_delete(BPtree *tree, KVpair *kv){
     BPtreeNode *mroot = tree->root;
     BPtree_deleteR(mroot->children[0], mroot, kv);
 }
+
