@@ -146,7 +146,8 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     return newNode;
 }
 
-//shrink a node with an empty child
+//Delete kv from an internal node based on the position of a null child
+//provided in del_child_idx
 BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
     /*
      * I almost went insane for errors caused by this simple thing. I
@@ -196,7 +197,7 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
     return newNode;
 }
 
-//Delete kv of a node. Only works for childless (external) nodes
+//Delete kv of a node. Only works for external nodes. 
 BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
     if(!node) return NULL;
     if(node->nkeys == 0) return NULL;
@@ -227,11 +228,8 @@ BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
                 continue;
             }
             BPtreeNode_appendKV(newNode, kv_idx, nodeKVs[i]);
-            //newNode->children[kv_idx] = node->children[i];
             kv_idx++;
         }
-        //if(delKVpos == node->nkeys-1) i--;  //special case for last node
-        //newNode->children[newNode->nkeys] = node->children[i];
         BPtreeNode_free(node);
     }else{
         //no kv found

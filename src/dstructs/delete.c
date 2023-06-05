@@ -1,22 +1,21 @@
 #include "delete.h"
 
+//TODO test what happens when using degree 4 and internal node becomes empty
+
 //pass extreme kv of src to extreme of dst. 
 BPtreeNode *shinBPT_borrow(BPtreeNode *dst, BPtreeNode *src, int dst_idx, bool fromRight, BPtreeNode *p){
-    BPtreeNode *updated = NULL;
-    //TODO: UPDATE THE VALUE OF THE PARENT NODE THROUGH WHICH THE KEY IS PASSED
-    
     //remove last key from src 
     KVpair *delKV;
     BPtreeNode *delChild;
     BPtreeNode *deleted = NULL;
-    if(fromRight){
+    if(fromRight){  //leftmost kv of src
         delKV = BPtreeNode_getKV(src, 0);
         delChild = src->children[0];
-    }else{
+    }else{          //rightmost kv of src
         delKV = BPtreeNode_getKV(src, src->nkeys-1);
         delChild = src->children[src->nkeys];
-        deleted = BPtreeNode_delete(src, delKV, NULL);
     }
+    deleted = BPtreeNode_delete(src, delKV, NULL);
 
     //insert kv at the beginning of dst kvs
     BPtreeNode *inserted = BPtreeNode_insert(dst, delKV, NULL);
@@ -27,19 +26,35 @@ BPtreeNode *shinBPT_borrow(BPtreeNode *dst, BPtreeNode *src, int dst_idx, bool f
         inserted->children[0] = delChild;
     }
     
-    //update parent if borrowed from left to right
-    //link parent to shrinked and inserted node
+    //Update the value of the parent node through which the key is passed (TODO)
+    
+    
+    //get first kv to the right of p
+    KVpair *pKV;
+    if(fromRight){ 
+        pKV = BPtreeNode_getKV(deleted, 0);
+    }else{
+        pKV = BPtreeNode_getKV(inserted, 0);
+    }
+    //(delete old kv, insert new kv);
+    KVpair_removeVal(pKV);
+    BPtreeNode *deleted_p = BPtreeNode_shrink(p, dst_idx);
+    BPtreeNode *updated_p = BPtreeNode_insert(deleted_p, pKV, NULL);
+
+    //link updated parent to shrinked and inserted node
     int srcSide = fromRight? 1 : -1;
-    p->children[dst_idx] = inserted;
-    p->children[dst_idx + srcSide] = deleted;
-    return updated;
+    updated_p->children[dst_idx] = inserted;
+    updated_p->children[dst_idx + srcSide] = deleted;
+    KVpair_free(pKV);
+    KVpair_free(delKV);
+    return updated_p;
 }
 
 //create a merged node with the nodes of inferior followed by superior. Reverse of split
 BPtreeNode *shinBPT_mergeINT(BPtreeNode *inferior, BPtreeNode *superior, BPtreeNode *p, int idx_from_p){
     //create node from node1, first kv of parent and node2  
     BPtreeNode *merged = BPtreeNode_create(inferior->nkeys + 1 + superior->nkeys);
-    int merged_idx = 0;
+    int merged_idx = 0; //used to insert kvs and children in 'merged' node
     //inferior
     for(int i = 0; i < inferior->nkeys; i++, merged_idx++){
         KVpair *tmpKV = BPtreeNode_getKV(inferior, i);
@@ -74,7 +89,7 @@ BPtreeNode *shinBPT_mergeINT(BPtreeNode *inferior, BPtreeNode *superior, BPtreeN
 
 static bool isSmallNode(BPtreeNode *node, int minvalue){
     //TODO: use this to check page size instead of number of keys
-    return node->nkeys >= minvalue;
+    return node->nkeys < minvalue;
 }
 
 
@@ -104,7 +119,7 @@ bool shinBPT_deleteR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
 
         //as parent. try giving from the left sibling to the node
         if(ptoc_idx != 0){  //left sibling does not exist
-            if(isSmallNode(node->children[ptoc_idx-1], tree->degree/2 -1)){
+            if(!isSmallNode(node->children[ptoc_idx-1], tree->degree/2 -1)){
 
                 BPtreeNode *updated = shinBPT_borrow(node->children[ptoc_idx], 
                         node->children[ptoc_idx-1], ptoc_idx, 0, node);
@@ -117,7 +132,7 @@ bool shinBPT_deleteR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
 
         //if left sibling too smal or inexistent, try the right sibling
         if(ptoc_idx != node->nkeys && !operationDone){
-            if(isSmallNode(node->children[ptoc_idx+1], tree->degree/2 -1)){
+            if(!isSmallNode(node->children[ptoc_idx+1], tree->degree/2 -1)){
 
                 BPtreeNode *updated = shinBPT_borrow(node->children[ptoc_idx], 
                         node->children[ptoc_idx+1], ptoc_idx, 1, node);

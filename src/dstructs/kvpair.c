@@ -16,15 +16,15 @@ void KVpair_print(KVpair *kv){
 }
 
 KVpair *KVpair_create(uint32_t klen, uint32_t vlen, char *key, void *val){
-    KVpair *kv = malloc(sizeof(KVpair));
+    KVpair *kv = calloc(1, sizeof(KVpair));
 
     kv->klen = klen;
     kv->vlen = vlen;
 
-    kv->key = malloc(klen);
+    kv->key = calloc(1, klen);
     strncpy(kv->key, key, klen);
 
-    kv->val = malloc(vlen);
+    kv->val = calloc(1, vlen);
     memcpy(kv->val, val, vlen);
 
     return kv;
@@ -41,6 +41,10 @@ void KVpair_free(KVpair *ptr){
 
 
 KVpair *KVpair_decode(uint8_t *bytestream){ 
+    if(!bytestream){
+        printf("aqui\n");
+        exit(1);
+    }
     uint32_t klen;
     memcpy(&klen, bytestream, sizeof(uint32_t));
     bytestream += sizeof(uint32_t);
@@ -49,11 +53,11 @@ KVpair *KVpair_decode(uint8_t *bytestream){
     memcpy(&vlen, bytestream, sizeof(uint32_t));
     bytestream += sizeof(uint32_t);
 
-    char *key = malloc(klen); 
+    char *key = calloc(1, klen); 
     memcpy(key, bytestream, klen);
     bytestream += klen;
 
-    uint8_t *val= malloc(vlen); 
+    uint8_t *val= calloc(1, vlen); 
     memcpy(val, bytestream, vlen);
 
     KVpair *kv = KVpair_create(klen, vlen, key, val);
@@ -64,7 +68,7 @@ KVpair *KVpair_decode(uint8_t *bytestream){
                                            
 uint8_t *KVpair_encode(KVpair *kv){
     size_t streamSize = KVpair_getSize(kv);
-    uint8_t *bytestream = malloc(streamSize);
+    uint8_t *bytestream = calloc(1, streamSize);
 
     uint8_t *tmp = bytestream;
 

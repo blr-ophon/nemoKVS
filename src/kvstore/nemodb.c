@@ -39,16 +39,16 @@ int main(void){
     BPtree *tree = BPtree_create(4);
     BPtree_print(tree);
 
-    KVpair * kv1 = KVpair_create(1, 10, "1", "test-VAL1");
-    KVpair * kv2 = KVpair_create(1, 10, "2", "test-VAL2");
-    KVpair * kv3 = KVpair_create(1, 10, "3", "test-VAL3");
-    KVpair * kv4 = KVpair_create(1, 10, "4", "test-VAL4");
-    KVpair * kv5 = KVpair_create(1, 10, "5", "test-VAL5");
-    KVpair * kv6 = KVpair_create(1, 10, "6", "test-VAL6");
-    KVpair * kv7 = KVpair_create(1, 10, "7", "test-VAL7");
-    KVpair * kv8 = KVpair_create(1, 10, "8", "test-VAL8");
-    KVpair * kv9 = KVpair_create(1, 10, "9", "test-VAL9");
-    KVpair * kva = KVpair_create(2, 10, "10", "test-VALA");
+    KVpair * kv1 = KVpair_create(1, 9, "1", "test-VAL1");
+    KVpair * kv2 = KVpair_create(1, 9, "2", "test-VAL2");
+    KVpair * kv3 = KVpair_create(1, 9, "3", "test-VAL3");
+    KVpair * kv4 = KVpair_create(1, 9, "4", "test-VAL4");
+    KVpair * kv5 = KVpair_create(1, 9, "5", "test-VAL5");
+    KVpair * kv6 = KVpair_create(1, 9, "6", "test-VAL6");
+    KVpair * kv7 = KVpair_create(1, 9, "7", "test-VAL7");
+    KVpair * kv8 = KVpair_create(1, 9, "8", "test-VAL8");
+    KVpair * kv9 = KVpair_create(1, 9, "9", "test-VAL9");
+    KVpair * kva = KVpair_create(2, 9, "10", "test-VALA");
 
     BPtree_insert(tree, kv1);
     BPtree_insert(tree, kv2);
@@ -61,22 +61,16 @@ int main(void){
     BPtree_insert(tree, kv9);
     BPtree_insert(tree, kva);
 
-    trueBPT_delete(tree, kv3);
-    trueBPT_delete(tree, kv4);
-    trueBPT_delete(tree, kv5);
-    trueBPT_delete(tree, kv6);
-
-
-    //BPtree_delete(tree, kv1);
-    //BPtree_delete(tree, kv2);
-    //BPtree_delete(tree, kv3);
-    //BPtree_delete(tree, kv4);
-    //BPtree_delete(tree, kv5);
-    //BPtree_delete(tree, kv6);
-    //BPtree_delete(tree, kv7);
-    //BPtree_delete(tree, kv9);
-    //BPtree_delete(tree, kv9);
-    //BPtree_delete(tree, kva);
+    BPT_delete(tree, kv1);
+    BPT_delete(tree, kv2);
+    //BPT_delete(tree, kv3);
+    //BPT_delete(tree, kv4);
+    //BPT_delete(tree, kv5);
+    //BPT_delete(tree, kv6);
+    //BPT_delete(tree, kv7);
+    //BPT_delete(tree, kv8);
+    //BPT_delete(tree, kv9);
+    //BPT_delete(tree, kva);
 
     if(BPtree_search(tree, kv1, NULL)) printf("kv1 found\n");
     if(BPtree_search(tree, kv2, NULL)) printf("kv2 found\n");
@@ -84,17 +78,21 @@ int main(void){
     if(BPtree_search(tree, kv4, NULL)) printf("kv4 found\n");
     if(BPtree_search(tree, kv5, NULL)) printf("kv5 found\n");
     if(BPtree_search(tree, kv6, NULL)) printf("kv6 found\n");
+    if(BPtree_search(tree, kv7, NULL)) printf("kv7 found\n");
+    if(BPtree_search(tree, kv8, NULL)) printf("kv8 found\n");
+    if(BPtree_search(tree, kv9, NULL)) printf("kv9 found\n");
+    if(BPtree_search(tree, kva, NULL)) printf("kva found\n");
 
     //BPtreeNode_print(tree->root->children[0]);
     //BPtreeNode_print(tree->root->children[0]->children[0]);
     //BPtreeNode_print(tree->root->children[0]->children[1]);
     //BPtreeNode_print(tree->root->children[0]->children[2]);
     //BPtreeNode_print(tree->root->children[0]->children[3]);
-    BPtreeNode_print(tree->root->children[0]->children[0]->children[0]);
-    BPtreeNode_print(tree->root->children[0]->children[0]->children[1]);
-    BPtreeNode_print(tree->root->children[0]->children[0]->children[2]);
-    BPtreeNode_print(tree->root->children[0]->children[1]->children[0]);
-    BPtreeNode_print(tree->root->children[0]->children[1]->children[1]);
+    //BPtreeNode_print(tree->root->children[0]->children[0]->children[0]);
+    //BPtreeNode_print(tree->root->children[0]->children[0]->children[1]);
+    //BPtreeNode_print(tree->root->children[0]->children[0]->children[2]);
+    //BPtreeNode_print(tree->root->children[0]->children[1]->children[0]);
+    //BPtreeNode_print(tree->root->children[0]->children[1]->children[1]);
     //DB_create("test_db");
     //Database *db = DB_load("test_db");
     //if(!db){

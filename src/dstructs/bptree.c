@@ -17,7 +17,7 @@ void BPtree_print(BPtree *tree){
 }
 
 BPtree *BPtree_create(uint8_t degree){
-    BPtree *rv = malloc(sizeof(BPtree));
+    BPtree *rv = calloc(1, sizeof(BPtree));
     rv->degree = degree;
 
     //master root
