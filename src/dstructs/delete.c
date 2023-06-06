@@ -20,12 +20,24 @@ BPtreeNode *shinBPT_borrow(BPtreeNode *dst, BPtreeNode *src, int dst_idx, bool f
     //deleted = BPtreeNode_delete(src, delKV, NULL);
 
     //insert kv at the beginning of dst kvs
+     
+    //(***) special case for trees of degree <= 4
+    BPtreeNode *keylessChild = NULL;
+    if(dst->nkeys == 0){
+        keylessChild = dst->children[0];
+    }
+
     BPtreeNode *inserted = BPtreeNode_insert(dst, delKV, NULL);
     //insert child at the beginning of dst children
     if(fromRight){
         inserted->children[inserted->nkeys+1] = delChild;
     }else{
         inserted->children[0] = delChild;
+    }
+
+    //(***) special case for trees of degree <= 4
+    if(keylessChild){
+        inserted->children[!fromRight] = keylessChild;
     }
     
     //Update the value of the parent node through which the key is passed

@@ -102,7 +102,9 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     newNode->type = node->type;
 
     if(node->nkeys == 0){
-        //TODO: fix
+        //This causes problems with borrow in trees of degree 4.
+        //The single children can go either to the left or right of
+        //the inserted node. The borrow function handles this.
         BPtreeNode_appendKV(newNode, 0, kv);
         BPtreeNode_free(node);
         return newNode;
