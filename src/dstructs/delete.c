@@ -4,18 +4,20 @@
 
 //pass extreme kv of src to extreme of dst. 
 BPtreeNode *shinBPT_borrow(BPtreeNode *dst, BPtreeNode *src, int dst_idx, bool fromRight, BPtreeNode *p){
-    //remove last key from src 
+    //remove last (or first) key from src 
     KVpair *delKV;
     BPtreeNode *delChild;
     BPtreeNode *deleted = NULL;
     if(fromRight){  //leftmost kv of src
         delKV = BPtreeNode_getKV(src, 0);
         delChild = src->children[0];
+        deleted = BPtreeNode_shrink(src, 0);
     }else{          //rightmost kv of src
         delKV = BPtreeNode_getKV(src, src->nkeys-1);
         delChild = src->children[src->nkeys];
+        deleted = BPtreeNode_shrink(src, src->nkeys);
     }
-    deleted = BPtreeNode_delete(src, delKV, NULL);
+    //deleted = BPtreeNode_delete(src, delKV, NULL);
 
     //insert kv at the beginning of dst kvs
     BPtreeNode *inserted = BPtreeNode_insert(dst, delKV, NULL);
@@ -26,19 +28,21 @@ BPtreeNode *shinBPT_borrow(BPtreeNode *dst, BPtreeNode *src, int dst_idx, bool f
         inserted->children[0] = delChild;
     }
     
-    //Update the value of the parent node through which the key is passed (TODO)
+    //Update the value of the parent node through which the key is passed
     
-    
-    //get first kv to the right of p
+    //get first kv in the right child right of p
     KVpair *pKV;
     if(fromRight){ 
         pKV = BPtreeNode_getKV(deleted, 0);
     }else{
         pKV = BPtreeNode_getKV(inserted, 0);
     }
+
+    //index of the kv in p through which the borrow happens
+    int kv_idx = fromRight? dst_idx :  dst_idx-1;
     //(delete old kv, insert new kv);
     KVpair_removeVal(pKV);
-    BPtreeNode *deleted_p = BPtreeNode_shrink(p, dst_idx);
+    BPtreeNode *deleted_p = BPtreeNode_shrink(p, kv_idx);
     BPtreeNode *updated_p = BPtreeNode_insert(deleted_p, pKV, NULL);
 
     //link updated parent to shrinked and inserted node
@@ -50,9 +54,9 @@ BPtreeNode *shinBPT_borrow(BPtreeNode *dst, BPtreeNode *src, int dst_idx, bool f
     return updated_p;
 }
 
-//create a merged node with the nodes of inferior followed by superior. Reverse of split
-//TODO: Aparently different for external and internal nodes (parent does not drop in external)
-BPtreeNode *shinBPT_mergeINT(BPtreeNode *inferior, BPtreeNode *superior, BPtreeNode *p, int idx_from_p){
+//Merges the inferior and superior child of a kv in a node. Reverse of split
+//kv_idx is the kv index in parent where whose 2 children are trying to merge
+BPtreeNode *shinBPT_mergeINT(BPtreeNode *inferior, BPtreeNode *superior, BPtreeNode *node, int kv_idx){
     bool internal = inferior->type == NT_INT;
 
     //create node from node1, first kv of parent and node2  
@@ -70,10 +74,12 @@ BPtreeNode *shinBPT_mergeINT(BPtreeNode *inferior, BPtreeNode *superior, BPtreeN
     //parent
     //append parent kv to merged node if nodes are internal
     if(internal){
-        KVpair *pKV = BPtreeNode_getKV(p, idx_from_p);
-        BPtreeNode_appendKV(merged, merged_idx++, pKV); 
+        //TODO: delete appended kv from p
+        KVpair *pKV = BPtreeNode_getKV(node, kv_idx);
+        BPtreeNode_appendKV(merged, merged_idx, pKV); 
+        merged->children[merged_idx] = inferior->children[inferior->nkeys];
+        merged_idx++;
         KVpair_free(pKV);
-        merged->children[merged_idx] = p->children[idx_from_p];
     }
 
     //superior
@@ -86,12 +92,12 @@ BPtreeNode *shinBPT_mergeINT(BPtreeNode *inferior, BPtreeNode *superior, BPtreeN
     merged->children[merged_idx] = superior->children[superior->nkeys];
 
     //parent loses one child and is shrinked
-    BPtreeNode *shrinked = BPtreeNode_shrink(p, idx_from_p);
-    shrinked->children[idx_from_p] = merged;    //TODO: probably wrong and with special case in 0
+    BPtreeNode *shrinked = BPtreeNode_shrink(node, kv_idx);
+    shrinked->children[kv_idx] = merged;    //TODO: probably wrong and with special case in 0
                                                 //
     BPtreeNode_free(inferior);
     BPtreeNode_free(superior);
-    BPtreeNode_free(p);
+    BPtreeNode_free(node);
     return shrinked;
     //NOTE: callee must link grandparent to shrinked
 }
@@ -155,7 +161,7 @@ bool shinBPT_deleteR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
         //if right sibling too small or inexistent, merge with left sibling
         if(ptoc_idx != 0 && !operationDone){
             BPtreeNode *merged = shinBPT_mergeINT(node->children[ptoc_idx-1], 
-                    node->children[ptoc_idx], node, ptoc_idx);
+                    node->children[ptoc_idx], node, ptoc_idx -1);
             p->children[NextChildIDX(p,kv)] = merged;
             operationDone = true;
             node = merged;
@@ -170,7 +176,12 @@ bool shinBPT_deleteR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
             node = merged;
         }
 
-        assert(operationDone);
+        //if node has no right nor left sibling to merge, it is root
+        if(!operationDone){ 
+            //link grandparent to grandchild skipping the empty root
+            p->children[0] = node->children[0];
+            BPtreeNode_free(node);
+        }
         
         //if parent becomes too small after merge, smallnode = true
         smallNode = isSmallNode(node, tree->degree/2 -1);

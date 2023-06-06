@@ -65,16 +65,27 @@ int main(void){
     BPtree_insert(tree, kv9);
     BPtree_insert(tree, kva);
 
-    BPT_delete(tree, kv1);
-    BPT_delete(tree, kv2);
-    BPT_delete(tree, kv3);
-    BPT_delete(tree, kv4);
+    //BPT_delete(tree, kv1);
+    //BPT_delete(tree, kv2);
+    //BPT_delete(tree, kv3);
+    //BPT_delete(tree, kv4);
     //BPT_delete(tree, kv5);
     //BPT_delete(tree, kv6);
     //BPT_delete(tree, kv7);
     //BPT_delete(tree, kv8);
     //BPT_delete(tree, kv9);
     //BPT_delete(tree, kva);
+
+    BPT_delete(tree, kva);
+    BPT_delete(tree, kv9);
+    BPT_delete(tree, kv8);
+    //BPT_delete(tree, kv7);
+    //BPT_delete(tree, kv6);
+    //BPT_delete(tree, kv5);
+    //BPT_delete(tree, kv4);
+    //BPT_delete(tree, kv3);
+    //BPT_delete(tree, kv2);
+    //BPT_delete(tree, kv1);
 
     if(BPtree_search(tree, kv1, NULL)) printf("kv1 found\n");
     if(BPtree_search(tree, kv2, NULL)) printf("kv2 found\n");
