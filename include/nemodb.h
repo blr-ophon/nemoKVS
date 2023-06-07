@@ -3,6 +3,7 @@
 
 #include "hashtable.h"
 #include "bptree.h"
+#include "dbtests.h"
 #include "kvstore.h"
 #include <string.h>
 #include <stdlib.h>

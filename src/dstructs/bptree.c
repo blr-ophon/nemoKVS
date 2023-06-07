@@ -119,7 +119,8 @@ void BPtree_insert(BPtree *tree, KVpair *kv){
 //returns node pointer and the id of the key in idx
 BPtreeNode *BPtree_search(BPtree *tree, KVpair *kv, int *idx){
     //traverse until reach an external node
-    BPtreeNode *tmp = tree->root;
+    BPtreeNode *tmp = tree->root->children[0];
+    if(!tmp) return NULL;
     while(tmp->type != NT_EXT){
         tmp = tmp->children[NextChildIDX(tmp, kv)];
     }
