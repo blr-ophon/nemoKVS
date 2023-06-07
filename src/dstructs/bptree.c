@@ -2,6 +2,8 @@
 
 //TODO: when in external memory, the conditions for spliting and merging are the size of the page
 //instead of the number of keys
+//TODO: make an optimization table with the number of reads and writes from nodes for each function,
+//then try to reduce them.
 
 
 void BPtree_print(BPtree *tree){

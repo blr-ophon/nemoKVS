@@ -2,11 +2,21 @@
 
 //TODO test what happens when using degree 4 and internal node becomes empty
 
+//used to update the parent node when a borrow occurs
+KVpair *BPtree_getLeftmostKV(BPtreeNode *node){
+    BPtreeNode *tmp = node;
+    while(tmp->type != NT_EXT){
+        tmp = tmp->children[0];
+    }
+    return BPtreeNode_getKV(tmp, 0);
+}
+
 //pass extreme kv of src to extreme of dst. 
 BPtreeNode *shinBPT_borrow(BPtreeNode *dst, BPtreeNode *src, int dst_idx, bool fromRight, BPtreeNode *p){
-    //remove last (or first) key from src 
-    KVpair *delKV;
-    BPtreeNode *delChild;
+    //remove last (or first) kv from src 
+    
+    KVpair *delKV;                          //deleted key
+    BPtreeNode *delChild;                   //child of the deleted key
     BPtreeNode *deleted = NULL;
     if(fromRight){  //leftmost kv of src
         delKV = BPtreeNode_getKV(src, 0);
@@ -19,7 +29,7 @@ BPtreeNode *shinBPT_borrow(BPtreeNode *dst, BPtreeNode *src, int dst_idx, bool f
     }
     //deleted = BPtreeNode_delete(src, delKV, NULL);
 
-    //insert kv at the beginning of dst kvs
+    //insert the borrowed kv in dst with its children
      
     //(***) special case for trees of degree <= 4
     BPtreeNode *keylessChild = NULL;
@@ -27,27 +37,38 @@ BPtreeNode *shinBPT_borrow(BPtreeNode *dst, BPtreeNode *src, int dst_idx, bool f
         keylessChild = dst->children[0];
     }
 
-    BPtreeNode *inserted = BPtreeNode_insert(dst, delKV, NULL);
+    //if the key passed to dst has child, update the first key of dst node
+    KVpair *insrtKV = delKV;
+    if(delChild){
+        if(fromRight){
+            insrtKV = BPtreeNode_getKV(delChild, 0);
+        }else{
+            insrtKV = BPtreeNode_getKV(dst->children[0], 0);
+        }
+    }
+    KVpair_removeVal(insrtKV);
+    
+    BPtreeNode *inserted = BPtreeNode_insert(dst, insrtKV, NULL);
     //insert child at the beginning of dst children
     if(fromRight){
         inserted->children[inserted->nkeys+1] = delChild;
     }else{
         inserted->children[0] = delChild;
     }
-
     //(***) special case for trees of degree <= 4
     if(keylessChild){
         inserted->children[!fromRight] = keylessChild;
     }
-    
+
+
     //Update the value of the parent node through which the key is passed
     
-    //get first kv in the right child right of p
+    //get first leftmost kv to the right of p
     KVpair *pKV;
     if(fromRight){ 
-        pKV = BPtreeNode_getKV(deleted, 0);
+        pKV = BPtree_getLeftmostKV(deleted);
     }else{
-        pKV = BPtreeNode_getKV(inserted, 0);
+        pKV = BPtree_getLeftmostKV(inserted);
     }
 
     //index of the kv in p through which the borrow happens
@@ -61,8 +82,11 @@ BPtreeNode *shinBPT_borrow(BPtreeNode *dst, BPtreeNode *src, int dst_idx, bool f
     int srcSide = fromRight? 1 : -1;
     updated_p->children[dst_idx] = inserted;
     updated_p->children[dst_idx + srcSide] = deleted;
+
+
     KVpair_free(pKV);
     KVpair_free(delKV);
+    if(insrtKV != delKV) KVpair_free(insrtKV);
     return updated_p;
 }
 
