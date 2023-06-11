@@ -6,6 +6,20 @@
 
 //TODO: external nodes dont need children links. Wasted space
 
+BPtreeNode *pageRead(uint64_t page){
+    //receives a page address, decodes page to a BPtreeNode
+    //returns node
+    
+    //x->children[0]->children[0] becomes:
+    //pageRead(pageRead(x->chilren[0])->children[0])
+    //or:
+    //p  = pageRead(x->children[0])
+    //c = pageRead(p->children[0])
+    //
+    //-- this at least makes explicit the number of page decodings/readins being
+    //done
+    return NULL;
+}
 
 static void assert_page(BPtreeNode *node){
     //assert node fits in a page
@@ -55,6 +69,7 @@ void BPtreeNode_print(BPtreeNode *node){
 }
 
 
+//TODO; return int64 page address
 //create a node with size n
 BPtreeNode *BPtreeNode_create(uint8_t nkeys){
     BPtreeNode *rv = (BPtreeNode*) calloc(1, sizeof(BPtreeNode));
@@ -92,6 +107,7 @@ int BPtreeNode_search(BPtreeNode* node, KVpair *kv){
     return -1;
 }
 
+//TODO; return int64 page address
 BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     if(!node){
         node = BPtreeNode_create(0);
@@ -148,6 +164,7 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     return newNode;
 }
 
+//TODO; return int64 page address
 //Delete kv from an internal node based on the position of a null child
 //provided in del_child_idx
 BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
@@ -199,6 +216,7 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
     return newNode;
 }
 
+//TODO; return int64 page address
 //Delete kv of a node. Only works for external nodes. 
 BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
     if(!node) return NULL;
@@ -248,6 +266,7 @@ BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
 }
 
 
+//TODO; return int64 page address
 //splits node and returns it's pointer. returned node must be merged with parent node
 BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     int i;
@@ -298,6 +317,7 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     return p;
 }
 
+//TODO; return int64 page address
 //To be used with split. Merges 'splited' node with it's parent
 //expects splitted to be of size 1, coming from a split
 //expects splitted and node to be internal nodes

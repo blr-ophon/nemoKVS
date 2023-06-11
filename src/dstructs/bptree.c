@@ -15,9 +15,9 @@ void BPtree_print(BPtree *tree){
     printf("Degree: %d\n", tree->degree); 
     printf("Root:");
     BPtreeNode_print(tree->root);
-    //TODO: print all nodes of the tree in order
 }
 
+//TODO: append master root record to the datafile
 BPtree *BPtree_create(uint8_t degree){
     BPtree *rv = calloc(1, sizeof(BPtree));
     rv->degree = degree;
@@ -31,6 +31,7 @@ BPtree *BPtree_create(uint8_t degree){
     return rv;
 }
 
+//TODO: free becomes deletion from file
 static void BPtree_free_rec(BPtreeNode *node){
     if(node == NULL) return;
 
@@ -40,6 +41,7 @@ static void BPtree_free_rec(BPtreeNode *node){
     BPtreeNode_free(node);
 }
 
+//TODO: free becomes deletion from file
 void BPtree_free(BPtree *ptr){
     BPtree_free_rec(ptr->root);
     free(ptr);

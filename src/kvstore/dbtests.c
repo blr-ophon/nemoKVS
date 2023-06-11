@@ -71,10 +71,10 @@ int DBtests_search(BPtree *tree, KVpair **KVs, int n){
 }
 
 void DBtests_all(BPtree *tree, int n){
-    DBtests_custom(tree);
-    //DBtests_inorder(tree, n);
-    //DBtests_revorder(tree, n);
-    //DBtests_randorder(tree, n);
+    //DBtests_custom(tree);
+    DBtests_inorder(tree, n);
+    DBtests_revorder(tree, n);
+    DBtests_randorder(tree, n);
 }
 
 void DBtests_randorder(BPtree *tree, int n){

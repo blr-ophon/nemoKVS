@@ -34,6 +34,7 @@ typedef struct BPtreeNode{
     uint8_t *key_values;             //array of bytes with key values
 }BPtreeNode;
 
+BPtreeNode *pageRead(uint64_t page);
 
 void BPtreeNode_print(BPtreeNode *node);
 

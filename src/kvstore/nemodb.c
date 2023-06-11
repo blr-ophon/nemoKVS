@@ -45,12 +45,13 @@ int main(void){
     BPtree_print(tree);
 
     DBtests_all(tree, 10);
-    //DB_create("test_db");
-    //Database *db = DB_load("test_db");
-    //if(!db){
-    //    printf("database not found");
-    //    return -1;
-    //}
+    DB_create("test_db");
+    Database *db = DB_load("test_db");
+    if(!db){
+        printf("database not found\n");
+        return -1;
+    }
+    printf("Database loaded\n");
 
     //uint8_t data1[7] = {1,2,3,4,5,6,7};
     //DB_Insert(db, "testkey1", data1, 7);
@@ -73,7 +74,7 @@ int main(void){
 
 
     //Record_free(rec);
-    //DB_free(db);
+    DB_free(db);
     return 0;
 }
 
@@ -97,15 +98,11 @@ void DB_create(char *name){
 
     //create database file
     char dbfile[2*MAX_PATHNAME] = {0};
-    char metafile[2*MAX_PATHNAME] = {0};
     snprintf(dbfile, MAX_PATHNAME, "%s/%s%s", dbfolder, name, ".dat");
-    snprintf(metafile, MAX_PATHNAME, "%s/%s%s", dbfolder, name, ".kv");
 
     //TODO: ask if user wishes to overwrite if it's the same name
     FILE *dbf = fopen(dbfile, "w");
-    FILE *metaf = fopen(metafile, "w");
     fclose(dbf);
-    fclose(metaf);
 }
 
 Database *DB_load(char *dbname){
@@ -118,9 +115,7 @@ Database *DB_load(char *dbname){
     snprintf(dbfolder, MAX_PATHNAME, "%s/%s", basedir, dbname);
 
     char dbfile[2*MAX_PATHNAME] = {0};
-    char metafile[2*MAX_PATHNAME] = {0};
     snprintf(dbfile, MAX_PATHNAME, "%s/%s%s", dbfolder, dbname, ".dat");
-    snprintf(metafile, MAX_PATHNAME, "%s/%s%s", dbfolder, dbname, ".kv");
 
     if(stat(dbfolder, &st) < 0){ 
         //database not found
@@ -130,16 +125,6 @@ Database *DB_load(char *dbname){
     Database *database = malloc(sizeof(Database));
     database->name = strdup(dbname);
     database->path = strdup(dbfolder);  
-
-    //LOAD HASHTABLE
-    
-    database->indexfile.id = 0;  //TODO
-    database->indexfile.offset = 0;  //TODO
-    database->indexfile.reader = fopen(metafile, "rb");
-    //ferror_check(database->indexfile.reader);
-    database->indexfile.writer = fopen(metafile, "ab");
-    //TODO: check fopen errno
-    database->keyDir = Indexfile_load(database->indexfile.reader);
 
     //LOAD DATAFILE
     
@@ -162,7 +147,6 @@ void DB_merge(Database *db){
 }
 
 void DB_free(Database *db){
-    ht_freeTable(db->keyDir);
     fclose(db->datafile.reader);
     fclose(db->datafile.writer);
 
@@ -185,45 +169,10 @@ void DB_destroy(Database *db){
 }
 
 int DB_Insert(Database *db, char *key, uint8_t *data, size_t size){
-    if(ht_search(db->keyDir, key)){
-        //TODO: delete previous entry in hashmap and indexfile
-        printf("Record found for given key\n");
-        return -1;
-    }
-    
-    //create and store record file
-    Record *rec = Record_create(key, data, size);         
-    Meta metadata;  //to be filled by Record_store
-    if(Record_store(db, rec, &metadata) < 0){
-        printf("Record store failure\n");
-        return -1;
-    }
+    //create kvpair with key and data
 
-    //append to indexfile 
-    Indexfile_append(db->indexfile.writer, rec, &metadata);
-
-    //store in hashmap
-    ht_insert(db->keyDir, key, &metadata);
-    fflush(db->datafile.writer);
-    fflush(db->indexfile.writer);
-
-    Record_free(rec);
-    return 0;
+    //insert kvpair in bptree
 }
 
-Record *DB_Read(Database *db, char *key){
-    fflush(db->datafile.reader);
-
-    Meta *metadata = ht_retrieveVal(db->keyDir, key);
-    printf("Metadata(%u(id) | %u(pos) | %u(size) | %u(ts))\n",
-            metadata->FileID,
-            metadata->RecordPos,
-            metadata->RecordSize,
-            metadata->Timestamp
-          );
-
-
-    Record *rec = Record_load(db, metadata->RecordPos);
-
-    return rec;
+KVpair *DB_Read(Database *db, char *key){
 }
