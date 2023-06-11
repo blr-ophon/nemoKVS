@@ -28,13 +28,11 @@ enum NODE_TYPE{
 typedef struct BPtreeNode{
     uint16_t type;                   //internal or external
     uint16_t nkeys;                  //number of keys
-    size_t dataSize;                 //size of key_values in bytes
+    uint64_t dataSize;                 //size of key_values in bytes
     struct BPtreeNode **children;    //Array of pointers to children
     uint16_t *keyOffsets;            //Array of offsets to key values
     uint8_t *key_values;             //array of bytes with key values
 }BPtreeNode;
-
-BPtreeNode *pageRead(uint64_t page);
 
 void BPtreeNode_print(BPtreeNode *node);
 
@@ -52,6 +50,9 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int child_idx);
 KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx);
 void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv);
 
+int BPtreeNode_getSize(BPtreeNode *node);
+uint8_t *BPtreeNode_encode(BPtreeNode *node);
+BPtreeNode *BPtreeNode_decode(uint8_t *bytestream);
 
 
 //LATER

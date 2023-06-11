@@ -6,21 +6,6 @@
 
 //TODO: external nodes dont need children links. Wasted space
 
-BPtreeNode *pageRead(uint64_t page){
-    //receives a page address, decodes page to a BPtreeNode
-    //returns node
-    
-    //x->children[0]->children[0] becomes:
-    //pageRead(pageRead(x->chilren[0])->children[0])
-    //or:
-    //p  = pageRead(x->children[0])
-    //c = pageRead(p->children[0])
-    //
-    //-- this at least makes explicit the number of page decodings/readins being
-    //done
-    return NULL;
-}
-
 static void assert_page(BPtreeNode *node){
     //assert node fits in a page
 }
@@ -369,3 +354,77 @@ void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
     free(bytestream);
 }
 
+int BPtreeNode_getSize(BPtreeNode *node){
+    //header
+    int size = 2*sizeof(uint16_t) + sizeof(size_t);
+    //children
+    size += (node->nkeys+1) * sizeof(uint64_t);
+    //offsets
+    size += (node->nkeys) * sizeof(uint16_t);
+    //kv pairs
+    size += node->dataSize;
+    return size;
+}
+
+uint8_t *BPtreeNode_encode(BPtreeNode *node){
+    int size = BPtreeNode_getSize(node);
+    uint8_t *bytestream = malloc(size);
+    
+    uint8_t *offset = bytestream;
+    
+    //header
+    memcpy(offset, &node->type, sizeof(uint16_t));
+    offset += 2;
+    memcpy(offset, &node->nkeys, sizeof(uint16_t));
+    offset += 2;
+    memcpy(offset, &node->dataSize, sizeof(uint64_t));
+    offset += 8;
+
+    //children
+    for(int i = 0; i < node->nkeys + 1; i++){
+        memcpy(offset, &node->children[i], sizeof(uint64_t));
+        offset += 8;
+    }
+
+    //offsets
+    for(int i = 0; i < node->nkeys; i++){
+        memcpy(offset, &node->keyOffsets[i], sizeof(uint16_t));
+        offset += 2;
+    }
+
+    //data
+    memcpy(offset, node->key_values, node->dataSize);
+
+    return bytestream;
+}
+
+BPtreeNode *BPtreeNode_decode(uint8_t *bytestream){
+    //header
+    uint16_t nkeys;
+    memcpy(&nkeys, &bytestream[2], 2);
+    
+    BPtreeNode *node = BPtreeNode_create(nkeys);
+    node->nkeys = nkeys;
+
+    memcpy(&node->type, &bytestream[0], 2);
+    int offset = 4;
+    memcpy(&node->dataSize, &bytestream[offset], sizeof(uint64_t));
+    offset += 8;
+
+    //children
+    for(int i = 0; i < node->nkeys + 1; i++){
+        memcpy(&node->children[i], &bytestream[offset], sizeof(uint64_t));
+        offset += 8;
+    }
+
+    //offsets
+    for(int i = 0; i < node->nkeys + 1; i++){
+        memcpy(&node->keyOffsets[i], &bytestream[offset], sizeof(uint16_t));
+        offset += 2;
+    }
+
+    //data
+    memcpy(node->key_values, &bytestream[offset],  node->dataSize);
+    
+    return node;
+}
