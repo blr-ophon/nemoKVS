@@ -2,9 +2,8 @@
 
 #define PAGE_SIZE 100
 
-
-//write anywhere and return place
-int pageAppend(PageTable *table, BPtreeNode *node){
+//write to some page and return its index
+int pageWrite(PageTable *table, BPtreeNode *node){
     //encodes node
     uint8_t *bytestream = BPtreeNode_encode(node);
     
@@ -12,22 +11,17 @@ int pageAppend(PageTable *table, BPtreeNode *node){
     int page_n = pager_alloc(table);
 
     //write to said page
-    pageWrite(table, page_n, bytestream, BPtreeNode_getSize(node));
+    int size = BPtreeNode_getSize(node);
+    uint8_t *map = table->entries[page_n];
+    memcpy(map, bytestream, size);
 
     //return page id
     return page_n;
 }
 
-//write to specific location
-void pageWrite(PageTable *table, int page_n, uint8_t *bytestream, size_t size){
-    //write bytestream to the map of entry n 
-    char *map = table->entries[page_n].mmAddr;
-    memcpy(map, bytestream, size);
-}
-
 BPtreeNode *pageRead(PageTable *table, int page_n){
     //receives a page address, decodes page to a BPtreeNode
-    uint8_t *bytestream = (uint8_t*) table->entries[page_n].mmAddr;
+    uint8_t *bytestream = table->entries[page_n];
     BPtreeNode *node = BPtreeNode_decode(bytestream);
     //returns node
     return node;
@@ -42,23 +36,27 @@ BPtreeNode *pageRead(PageTable *table, int page_n){
     //done
 }
 
-//called at the start to map entire file to pages
-PageTable *pager_init(int fd, int len){
+//load page 0 from file to a pager table
+PageTable *pager_init(int fd){
     //mmap file
     struct stat sb;
     if(fstat(fd,&sb) < 0){
         perror("Couldn't get file size.\n");
     }
-    char *mapped_file = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    uint8_t *mapped_file = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     
     //create table
     PageTable *table = malloc(sizeof(PageTable));
 
+    //map page 0 of file (table page)
+    table->pageMap = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+    memcpy(&table->len, table->pageMap, 4);
+
     table->fd = fd;
-    table->entries = malloc(len *sizeof(PageEntry));
-    for(int i = 0; i < len; i ++){
-        table->entries[i].used = true;
-        table->entries[i].mmAddr = &mapped_file[PAGE_SIZE*i];
+    table->entries = malloc(table->len *sizeof(void*));
+
+    for(uint32_t i = 0; i < table->len; i ++){
+        table->entries[i] = &mapped_file[PAGE_SIZE*i];
     }
 
     return table;
@@ -66,33 +64,37 @@ PageTable *pager_init(int fd, int len){
 
 //if pager_alloc doesnt find an empty entry, increase it
 void pager_expand(PageTable *table){
-    //realloc to create new entry
-    //TODO: incorrect use of realloc
-    table->entries = realloc(table->entries, table->len +1); 
+    //update size
+    table->len ++;
+    memcpy(&table->pageMap[0], &table->len, sizeof(uint32_t));
 
-    //TODO: mmap new entry
-    //struct stat sb;
-    //if(fstat(table->fd,&sb) < 0){
-    //    perror("Couldn't get file size.\n");
-    //}
-    //char *mapped_file = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, table->fd, 0);
+    //append an empty page to table fd
+    off_t newPg_offset = lseek(table->fd, 0, SEEK_END);
+    const uint8_t zeroes[PAGE_SIZE] = {0};
+    write(table->fd, zeroes, sizeof(zeroes));
+    lseek(table->fd, 0, SEEK_SET);
 
-
-    table->entries[table->len].used = true;
+    //mmap new page
+    table->entries = realloc(table->entries, table->len * sizeof(void*));
+    table->entries[table->len-1] = mmap(NULL, PAGE_SIZE, PROT_READ, MAP_PRIVATE, table->fd, newPg_offset);
+    
+    //update page map
+    table->pageMap[table->len-1 +4] = 1;
 }
 
 int pager_alloc(PageTable *table){
     //looks for an empty entry in table and returns it
     for(size_t i = 0; i < table->len; i++){
-        if(!table->entries[i].used){
+        if(!table->pageMap[i +4]){
             return i;
         }
     }
     pager_expand(table);
-    return table->len;
+    return table->len -1;
 }
 
-void pager_free(PageTable *table, int page){
-    table->entries[page].used = false;
-    table->entries[page].mmAddr = 0;
+void pager_free(PageTable *table, int page_n){
+    table->pageMap[page_n +4] = 0;
+    //TODO: unmap entry
+    table->entries[page_n] = 0;
 }

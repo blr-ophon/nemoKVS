@@ -11,6 +11,7 @@ static void assert_page(BPtreeNode *node){
 }
 
 void BPtreeNode_print(BPtreeNode *node){
+    //--- as is
     printf("\n==== NODE ====\n");
     if(!node){
         printf("> Empty node\n");
@@ -57,6 +58,7 @@ void BPtreeNode_print(BPtreeNode *node){
 //TODO; return int64 page address
 //create a node with size n
 BPtreeNode *BPtreeNode_create(uint8_t nkeys){
+    //--- as is
     BPtreeNode *rv = (BPtreeNode*) calloc(1, sizeof(BPtreeNode));
     if(nkeys){
         rv->children = calloc(nkeys+1, sizeof(void*));
@@ -80,6 +82,7 @@ void BPtreeNode_free(BPtreeNode *node){
 
 
 int BPtreeNode_search(BPtreeNode* node, KVpair *kv){
+    //-- PAGE READ
     for(int i = 0; i < node->nkeys; i++){
         KVpair *crntKV = BPtreeNode_getKV(node, i);
         if(KVpair_compare(kv, crntKV) == 0){
@@ -94,6 +97,7 @@ int BPtreeNode_search(BPtreeNode* node, KVpair *kv){
 
 //TODO; return int64 page address
 BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
+    //-- PAGE READ
     if(!node){
         node = BPtreeNode_create(0);
     }
@@ -146,6 +150,7 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     free(nodeKVs);
 
     BPtreeNode_free(node);
+    //-- PAGE WRITE 
     return newNode;
 }
 
@@ -153,6 +158,7 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
 //Delete kv from an internal node based on the position of a null child
 //provided in del_child_idx
 BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
+    //---- PAGE READ
     /*
      * I almost went insane for errors caused by this simple thing. I
      * know it's ugly with all these loops, but it works... for now
@@ -199,11 +205,13 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
     }
     free(nodeKVs);
     return newNode;
+    //---- PAGE WRITE 
 }
 
 //TODO; return int64 page address
 //Delete kv of a node. Only works for external nodes. 
 BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
+    //---- PAGE READ
     if(!node) return NULL;
     if(node->nkeys == 0) return NULL;
 
@@ -248,12 +256,14 @@ BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
 
     free(nodeKVs);
     return newNode;
+    //---- PAGE WRITE 
 }
 
 
 //TODO; return int64 page address
 //splits node and returns it's pointer. returned node must be merged with parent node
 BPtreeNode *BPtreeNode_split(BPtreeNode *node){
+    //--- PAGE READ
     int i;
     bool internal = (node->type == NT_INT);
     bool odd = (node->nkeys % 2 != 0);
@@ -296,6 +306,8 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
     //link parent node to 2 children
     p->children[0] = Lnode;
     p->children[1] = Rnode;
+    //PAGE WRITE ALL 2 CHILDREN NODES
+    //  return node with these two 
     
     //destroy node
     BPtreeNode_free(node);

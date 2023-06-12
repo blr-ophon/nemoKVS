@@ -54,9 +54,4 @@ int BPtreeNode_getSize(BPtreeNode *node);
 uint8_t *BPtreeNode_encode(BPtreeNode *node);
 BPtreeNode *BPtreeNode_decode(uint8_t *bytestream);
 
-
-//LATER
-BPtreeNode *BPtreeNode_pageLoad(FILE *page);
-int BPtreeNode_pageDump(FILE *page, BPtreeNode *node);
-
 #endif
