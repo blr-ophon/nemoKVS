@@ -103,7 +103,7 @@ int pager_alloc(PageTable *table){
 }
 
 void pager_free(PageTable *table, int page_n){
+    assert(page_n >= 2);
     table->pageMap[page_n +4] = 0;
     //TODO: unmap entry
-    table->entries[page_n] = 0;
 }
