@@ -318,7 +318,7 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
 //To be used with split. Merges 'splited' node with it's parent
 //expects splitted to be of size 1, coming from a split
 //expects splitted and node to be internal nodes
-BPtreeNode *BPtreeNode_merge(BPtreeNode *node, BPtreeNode *splitted){
+BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted){
     //TODO: read all tmpKVs to an array
     //insert splitted to node
     KVpair *splittedKV = BPtreeNode_getKV(splitted, 0);

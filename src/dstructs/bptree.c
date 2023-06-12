@@ -84,7 +84,7 @@ static bool BPtree_insertR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair
     if(split){
         //merge node with it`s child that splitted
         BPtreeNode *splittedChild = node->children[NextChildIDX(node,kv)];
-        BPtreeNode *merged = BPtreeNode_merge(node, splittedChild);
+        BPtreeNode *merged = BPtreeNode_mergeSplitted(node, splittedChild);
         node = merged;
         //link parent to new merged node
         p->children[NextChildIDX(p, kv)] = merged;

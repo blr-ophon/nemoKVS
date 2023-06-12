@@ -1,60 +1,63 @@
 #include "pager.h"
 
-//(C)write to some page and return its index
+//write to some page and return its index
 int pageWrite(PageTable *table, BPtreeNode *node){
-    //encodes node
-    uint8_t *bytestream = BPtreeNode_encode(node);
-    
     //allocate a page
     int page_n = pager_alloc(table);
 
+    //encodes node
+    uint8_t *bytestream = BPtreeNode_encode(node);
+
     //write to said page
     int size = BPtreeNode_getSize(node);
-    uint8_t *map = table->entries[page_n];
-    memcpy(map, bytestream, size);
+    uint8_t *page = table->entries[page_n];
+    for(int i = 0; i < size; i++){
+        page[i] = bytestream[i];
+    }
+    //memcpy(page, bytestream, size);
+    //mark in table as used
 
     //return page id
     return page_n;
 }
 
+//reads the contents of a page as node
 BPtreeNode *pageRead(PageTable *table, int page_n){
     //receives a page address, decodes page to a BPtreeNode
     uint8_t *bytestream = table->entries[page_n];
     BPtreeNode *node = BPtreeNode_decode(bytestream);
-    //returns node
     return node;
-    
-    //x->children[0]->children[0] becomes:
-    //pageRead(pageRead(x->chilren[0])->children[0])
-    //or:
-    //p  = pageRead(x->children[0])
-    //c = pageRead(p->children[0])
-    //
-    //-- this at least makes explicit the number of page decodings/readins being
-    //done
 }
 
 //load page 0 from file to a pager table
 PageTable *pager_init(int fd){
-    //mmap file
+    //mmap file 
     struct stat sb;
     if(fstat(fd,&sb) < 0){
         perror("Couldn't get file size.\n");
     }
-    uint8_t *mapped_file = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if(sb.st_size % getpagesize() != 0){
+        fprintf(stderr, "WARNING: File not aligned\n");
+    }
+    uint8_t *mapped_file = mmap(NULL, sb.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if(mapped_file == MAP_FAILED){
+        perror("mmap");
+        exit(1);
+    }
     
     //create table
     PageTable *table = malloc(sizeof(PageTable));
 
-    //map page 0 of file (table page)
-    table->pageMap = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+    //give page 0 (table page) map to table 
+    table->pageMap = &mapped_file[0];
     memcpy(&table->len, table->pageMap, 4);
 
     table->fd = fd;
     table->entries = malloc(table->len *sizeof(void*));
 
-    for(uint32_t i = 0; i < table->len; i ++){
-        table->entries[i] = &mapped_file[PAGE_SIZE*i];
+    //give other pages to entries
+    for(uint32_t i = 1; i < table->len; i ++){
+        table->entries[i] = &mapped_file[getpagesize()*i];
     }
 
     return table;
@@ -68,13 +71,19 @@ void pager_expand(PageTable *table){
 
     //append an empty page to table fd
     off_t newPg_offset = lseek(table->fd, 0, SEEK_END);
-    const uint8_t zeroes[PAGE_SIZE] = {0};
-    write(table->fd, zeroes, sizeof(zeroes));
+    uint8_t *emptyPage = calloc(1, getpagesize());
+    write(table->fd, emptyPage, getpagesize());
     lseek(table->fd, 0, SEEK_SET);
+    free(emptyPage);
 
     //mmap new page
     table->entries = realloc(table->entries, table->len * sizeof(void*));
-    table->entries[table->len-1] = mmap(NULL, PAGE_SIZE, PROT_READ, MAP_PRIVATE, table->fd, newPg_offset);
+    uint8_t *newMap = mmap(NULL, getpagesize(), PROT_READ | PROT_WRITE, MAP_SHARED, table->fd, newPg_offset);
+    if(newMap == MAP_FAILED){
+        perror("mmap (new)");
+        exit(1);
+    }
+    table->entries[table->len-1] = newMap;
     
     //update page map
     table->pageMap[table->len-1 +4] = 1;
@@ -84,10 +93,12 @@ int pager_alloc(PageTable *table){
     //looks for an empty entry in table and returns it
     for(size_t i = 0; i < table->len; i++){
         if(!table->pageMap[i +4]){
+            table->pageMap[i +4] = 1;
             return i;
         }
     }
     pager_expand(table);
+    table->pageMap[table->len-1 +4] = 1;
     return table->len -1;
 }
 

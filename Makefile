@@ -30,6 +30,7 @@ run: ${EXEC}
 
 dump:
 	hexdump -C ./databases/test_db/test_db.dat
+	ls -l ./databases/test_db/test_db.dat
 
 debug: ${EXEC}
 	cgdb --args $^ 

@@ -1,27 +1,29 @@
 #ifndef NEMODB_h
 #define NEMODB_h
 
-#include "common.h"
-#include "bptree.h"
-#include "dbtests.h"
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
 
-typedef struct{
-    //pthread_rwlock_t rwlock;
-    FILE* writer;
-    FILE* reader;
-    int id;
-    int offset;
-}Datafile;
+#include "common.h"
+#include "bptree.h"
+#include "dbtests.h"
+#include "pager.h"
+
+//typedef struct{
+//    //pthread_rwlock_t rwlock;
+//    FILE* writer;
+//    FILE* reader;
+//    int id;
+//    int offset;
+//}Datafile;
 
 typedef struct database{
     char *name;
     char *path;
+    PageTable *table;
 
-    Datafile datafile;
-    Datafile indexfile;
+    //Datafile datafile;
 }Database;
 
 

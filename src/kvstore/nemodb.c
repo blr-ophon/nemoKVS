@@ -39,6 +39,12 @@
 //to confirm where)
 
 
+void createTestNode(BPtreeNode *node){
+    node->type = 0x77;
+    for(int i = 0; i < node->nkeys; i++){
+        node->keyOffsets[i] = 10*i;
+    }
+}
 
 int main(void){
     //BPtree *tree = BPtree_create(4);
@@ -46,12 +52,16 @@ int main(void){
 
     //DBtests_all(tree, 10);
     DB_create("test_db", 4);
-    //Database *db = DB_load("test_db");
-    //if(!db){
-    //    printf("database not found\n");
-    //    return -1;
-    //}
-    //printf("Database loaded\n");
+    Database *db = DB_load("test_db");
+    if(!db){
+        printf("database not found\n");
+        return -1;
+    }
+    printf("Database loaded\n");
+
+    BPtreeNode *node = BPtreeNode_create(4);
+    createTestNode(node);
+    pageWrite(db->table, node);
 
     //uint8_t data1[7] = {1,2,3,4,5,6,7};
     //DB_Insert(db, "testkey1", data1, 7);
@@ -74,7 +84,7 @@ int main(void){
 
 
     //Record_free(rec);
-    //DB_free(db);
+    DB_free(db);
     return 0;
 }
 
@@ -101,17 +111,29 @@ void DB_create(char *name, int node_len){
     snprintf(dbfile, MAX_PATHNAME, "%s/%s%s", dbfolder, name, ".dat");
 
     //TODO: ask if user wishes to overwrite if it's the same name
-    int fd = open(dbfile, O_WRONLY | O_APPEND | O_CREAT);
+    int fd = open(dbfile, O_WRONLY | O_CREAT | O_TRUNC);
     chmod(dbfile, S_IRUSR | S_IWUSR);
     
-    //create empty page table
-    const uint8_t zeroes[PAGE_SIZE] = {0};
-    write(fd, zeroes, sizeof(zeroes));
+    //create page table 
+    uint8_t *emptyPages = calloc(1, 2*getpagesize());
 
-    //TODO: create a master root page
+    uint32_t page_num = 2;  //page 0 and 1
+    memcpy(&emptyPages[0], &page_num, sizeof(uint32_t));
+    emptyPages[0 +4] = 1;        //page table
+    emptyPages[1 +4] = 1;        //master root
+                                 
+    //write page table 
+    lseek(fd, 0*getpagesize(), SEEK_SET);
+    write(fd, emptyPages, 2*getpagesize());
+    free(emptyPages);
+
+    //create master root 
     BPtree *tree = BPtree_create(node_len);
     int node_size = BPtreeNode_getSize(tree->root);
     uint8_t *bytestream = BPtreeNode_encode(tree->root);
+
+    //write master root 
+    lseek(fd, 1*getpagesize(), SEEK_SET);
     write(fd, bytestream, node_size);
 
     close(fd);
@@ -138,13 +160,10 @@ Database *DB_load(char *dbname){
     database->name = strdup(dbname);
     database->path = strdup(dbfolder);  
 
-    //LOAD DATAFILE
-    
-    database->datafile.id = 0;  //TODO
-    database->datafile.offset = 0;  //TODO
-    database->datafile.reader = fopen(dbfile, "rb");
-    database->datafile.writer = fopen(dbfile, "ab");
-    //TODO: check fopen errno
+    //LOAD PAGER
+    //map page 0 to pager
+    int fd = open(dbfile, O_RDWR);
+    database->table = pager_init(fd);
 
     return database;
 }
@@ -159,9 +178,7 @@ void DB_merge(Database *db){
 }
 
 void DB_free(Database *db){
-    fclose(db->datafile.reader);
-    fclose(db->datafile.writer);
-
+    //TODO: free table
     free(db->name);
     free(db->path);
     free(db);
