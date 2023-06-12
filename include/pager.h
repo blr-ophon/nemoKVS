@@ -1,6 +1,7 @@
 #ifndef PAGER_H
 #define PAGER_H
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

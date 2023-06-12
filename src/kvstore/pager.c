@@ -1,8 +1,6 @@
 #include "pager.h"
 
-#define PAGE_SIZE 100
-
-//write to some page and return its index
+//(C)write to some page and return its index
 int pageWrite(PageTable *table, BPtreeNode *node){
     //encodes node
     uint8_t *bytestream = BPtreeNode_encode(node);

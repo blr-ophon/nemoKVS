@@ -1,10 +1,12 @@
 #ifndef NEMODB_h
 #define NEMODB_h
 
+#include "common.h"
 #include "bptree.h"
 #include "dbtests.h"
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 typedef struct{
     //pthread_rwlock_t rwlock;
@@ -23,7 +25,7 @@ typedef struct database{
 }Database;
 
 
-void DB_create(char *name);
+void DB_create(char *name, int node_len);
 Database *DB_load(char *dbname);
 
 void DB_free(Database *db);

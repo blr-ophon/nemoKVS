@@ -23,9 +23,13 @@ ${BUILD_DIR}/%.o: ${SRC_DIR}/%.c
 clean:
 	rm -rf ${BUILD_DIR} 
 	rm -rf ${BIN_DIR} 
+	rm -rf ./databases
 
 run: ${EXEC}
 	$^ 
+
+dump:
+	hexdump -C ./databases/test_db/test_db.dat
 
 debug: ${EXEC}
 	cgdb --args $^ 

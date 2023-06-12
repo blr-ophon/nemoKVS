@@ -41,17 +41,17 @@
 
 
 int main(void){
-    BPtree *tree = BPtree_create(4);
-    BPtree_print(tree);
+    //BPtree *tree = BPtree_create(4);
+    //BPtree_print(tree);
 
-    DBtests_all(tree, 10);
-    DB_create("test_db");
-    Database *db = DB_load("test_db");
-    if(!db){
-        printf("database not found\n");
-        return -1;
-    }
-    printf("Database loaded\n");
+    //DBtests_all(tree, 10);
+    DB_create("test_db", 4);
+    //Database *db = DB_load("test_db");
+    //if(!db){
+    //    printf("database not found\n");
+    //    return -1;
+    //}
+    //printf("Database loaded\n");
 
     //uint8_t data1[7] = {1,2,3,4,5,6,7};
     //DB_Insert(db, "testkey1", data1, 7);
@@ -74,12 +74,12 @@ int main(void){
 
 
     //Record_free(rec);
-    DB_free(db);
+    //DB_free(db);
     return 0;
 }
 
 //create database directory and struct
-void DB_create(char *name){
+void DB_create(char *name, int node_len){
     struct stat st = {0};
 
     //create base directory
@@ -101,8 +101,20 @@ void DB_create(char *name){
     snprintf(dbfile, MAX_PATHNAME, "%s/%s%s", dbfolder, name, ".dat");
 
     //TODO: ask if user wishes to overwrite if it's the same name
-    FILE *dbf = fopen(dbfile, "w");
-    fclose(dbf);
+    int fd = open(dbfile, O_WRONLY | O_APPEND | O_CREAT);
+    chmod(dbfile, S_IRUSR | S_IWUSR);
+    
+    //create empty page table
+    const uint8_t zeroes[PAGE_SIZE] = {0};
+    write(fd, zeroes, sizeof(zeroes));
+
+    //TODO: create a master root page
+    BPtree *tree = BPtree_create(node_len);
+    int node_size = BPtreeNode_getSize(tree->root);
+    uint8_t *bytestream = BPtreeNode_encode(tree->root);
+    write(fd, bytestream, node_size);
+
+    close(fd);
 }
 
 Database *DB_load(char *dbname){

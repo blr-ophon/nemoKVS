@@ -1,8 +1,6 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "nemodb.h"
-#include "kvstore.h"
-#include "hashtable.h"
+#define PAGE_SIZE 100
 
 #endif
