@@ -1,6 +1,8 @@
 #include <assert.h>
 #include "pager.h"
 
+//TODO: unmap maps 
+
 
 //load page 0 from file to a pager table
 PageTable *pager_init(int fd){
@@ -77,6 +79,12 @@ int pager_alloc(PageTable *table){
 
 void pager_free(PageTable *table, uint64_t pid){
     assert(pid >= 2);
+
+    //mark as free in table
     table->pageMap[pid +4] = 0;
-    //TODO: unmap entry
+
+    //fill with zeroes
+    uint8_t *zeroes = calloc(1, getpagesize());
+    memcpy(table->entries[pid], zeroes, getpagesize());
+    free(zeroes);
 }

@@ -62,11 +62,25 @@ int main(void){
     KVpair *kv1 = KVpair_create(1, 9, "1", "test-key1");
     KVpair *kv2 = KVpair_create(1, 9, "2", "test-key2");
     KVpair *kv3 = KVpair_create(1, 9, "3", "test-key3");
+    KVpair *kv4 = KVpair_create(1, 9, "4", "test-key4");
+    KVpair *kv5 = KVpair_create(1, 9, "5", "test-key5");
+    KVpair *kv6 = KVpair_create(1, 9, "6", "test-key6");
+    KVpair *kv7 = KVpair_create(1, 9, "7", "test-key7");
+    KVpair *kv8 = KVpair_create(1, 9, "8", "test-key8");
+    KVpair *kv9 = KVpair_create(1, 9, "9", "test-key9");
+    KVpair *kvA = KVpair_create(2, 9, "10", "test-key10");
 
     BPtree *tree = BPtree_create(db->table, 4);
     BPtree_insert(db->table, tree, kv1);
     BPtree_insert(db->table, tree, kv2);
     BPtree_insert(db->table, tree, kv3);
+    BPtree_insert(db->table, tree, kv4);
+    BPtree_insert(db->table, tree, kv5);
+    BPtree_insert(db->table, tree, kv6);
+    BPtree_insert(db->table, tree, kv7);
+    BPtree_insert(db->table, tree, kv8);
+    BPtree_insert(db->table, tree, kv9);
+    BPtree_insert(db->table, tree, kvA);
 
     //BPtreeNode *node = BPtreeNode_create(4);
     //createTestNode(node);

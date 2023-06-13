@@ -78,11 +78,14 @@ static BPtreeNode *BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_pid,
     BPtreeNode *p = nodeRead(t, p_pid);
     BPtreeNode *spl = NULL;
 
+    bool tryWrite = false;  //true whenever an insertion or merging occurs
+
     if(node->type == NT_EXT){
         //insert kv
         BPtreeNode *inserted = BPtreeNode_insert(node, kv, NULL);
         inserted->type = NT_EXT;
         node = inserted;
+        tryWrite = true;
     }else{
         //traverse next children
         uint64_t next_pid = node->childLinks[NextChildIDX(node, kv)];
@@ -93,20 +96,22 @@ static BPtreeNode *BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_pid,
         //merge node with it`s child that splitted
         BPtreeNode *merged = BPtreeNode_mergeSplitted(node, spl);
         node = merged;
+        tryWrite = true;
     }
 
     //if insert or merging makes node full
     if(node->nkeys >= tree->degree){
-        //split
+        //split (two children are written to disk. The splited node is freed)
         BPtreeNode *splitted = BPtreeNode_split(t, node);
+        node_free(t, node_pid);
         spl = splitted;
-    }else{
+    }else if(tryWrite){
+        //free old node. write new node
+        node_free(t, node_pid);
         uint64_t newNode = nodeWrite(t, node);
         //update p to link to node_pid
         int child_id = NextChildIDX(p, kv);
         linkUpdate(t, p_pid, child_id, newNode);
-        //free old node
-        node_free(t, node_pid);
         spl = NULL;
     }
 
@@ -127,7 +132,15 @@ void BPtree_insert(PageTable *t, BPtree *tree, KVpair *kv){
         return;
     }
 
-    BPtree_insertR(tree, t, root_id, tree->Mroot_id, kv);
+    BPtreeNode *splitted = BPtree_insertR(tree, t, root_id, tree->Mroot_id, kv);
+    if(splitted){   //root has splitted
+        //free old root
+        node_free(t, root_id);
+        //write new node
+        uint64_t newNode = nodeWrite(t, splitted);
+        //update mroot to link to new root
+        linkUpdate(t, 1, 0, newNode);
+    }
 }
 
 //returns node pointer and the id of the key in idx
