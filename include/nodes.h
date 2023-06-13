@@ -9,6 +9,7 @@
 #include <assert.h>
 
 #include "kvpair.h"
+#include "pager.h"
 
 
 //| type | nkeys |  children  |   offsets  | key-values
@@ -28,8 +29,9 @@ enum NODE_TYPE{
 typedef struct BPtreeNode{
     uint16_t type;                   //internal or external
     uint16_t nkeys;                  //number of keys
-    uint64_t dataSize;                 //size of key_values in bytes
-    struct BPtreeNode **children;    //Array of pointers to children
+    uint64_t dataSize;               //size of key_values in bytes
+    //struct BPtreeNode **children;  //Array of pointers to children
+    uint64_t *childLinks;            //Array of page indexes
     uint16_t *keyOffsets;            //Array of offsets to key values
     uint8_t *key_values;             //array of bytes with key values
 }BPtreeNode;
@@ -43,7 +45,7 @@ int BPtreeNode_search(BPtreeNode* node, KVpair *kv);
 BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx);
 BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx);
 
-BPtreeNode *BPtreeNode_split(struct BPtreeNode *node);
+BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node);
 BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted);
 BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int child_idx);
 
@@ -53,5 +55,8 @@ void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv);
 int BPtreeNode_getSize(BPtreeNode *node);
 uint8_t *BPtreeNode_encode(BPtreeNode *node);
 BPtreeNode *BPtreeNode_decode(uint8_t *bytestream);
+
+int nodeWrite(PageTable *table, BPtreeNode *node);
+BPtreeNode *nodeRead(PageTable *table, int page_n);
 
 #endif

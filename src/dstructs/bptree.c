@@ -26,7 +26,7 @@ BPtree *BPtree_create(uint8_t degree){
     rv->root = BPtreeNode_create(0);
     rv->root->type = NT_ROOT;
     rv->root->nkeys = 0;
-    rv->root->children[0] = NULL;       //tree root
+    rv->root->childLinks[0] = 0;       //tree root
 
     return rv;
 }
@@ -63,39 +63,48 @@ int NextChildIDX(BPtreeNode *node, KVpair *kv){
     return node->nkeys;
 }
 
-static bool BPtree_insertR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
-    //TODO: set node type correctly 
+//static bool BPtree_insertR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
+static bool BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_t p_pid, KVpair *kv){
+    //TODO: free all bptreeNodes
+    //TODO: see when nodes should be written
+    BPtreeNode *node = nodeRead(t, node_pid);
+    BPtreeNode *p = nodeRead(t, p_pid);
     bool split = false;
 
     if(node->type == NT_EXT){
         //insert kv
         BPtreeNode *inserted = BPtreeNode_insert(node, kv, NULL);
         inserted->type = NT_EXT;
+        //TODO: write only if no mergeSplitted occur
+        int inserted_pid = nodeWrite(t, inserted);
         node = inserted;
         //link parent to new node with inserted value
-        p->children[NextChildIDX(p, kv)] = inserted;
+        p->childLinks[NextChildIDX(p, kv)] = inserted_pid; //(***)
 
     }else{
         //traverse next children
-        BPtreeNode *next = node->children[NextChildIDX(node, kv)];
-        split = BPtree_insertR(tree, next, node, kv);
+        uint64_t next_pid = node->childLinks[NextChildIDX(node, kv)];
+        split = BPtree_insertR(tree, t, next_pid, node_pid, kv);
     }
 
     if(split){
         //merge node with it`s child that splitted
-        BPtreeNode *splittedChild = node->children[NextChildIDX(node,kv)];
+        uint64_t splittedChild_pid = node->childLinks[NextChildIDX(node,kv)];
+        BPtreeNode *splittedChild = nodeRead(t, splittedChild_pid);
         BPtreeNode *merged = BPtreeNode_mergeSplitted(node, splittedChild);
+        int merged_pid = nodeWrite(t, merged);
         node = merged;
         //link parent to new merged node
-        p->children[NextChildIDX(p, kv)] = merged;
+        p->childLinks[NextChildIDX(p, kv)] = merged_pid; //(***)
     }
 
     //if insert or merging makes node full
     if(node->nkeys >= tree->degree){
         //split
-        BPtreeNode *splitted = BPtreeNode_split(node);
+        BPtreeNode *splitted = BPtreeNode_split(t, node);
+        int splitted_pid = nodeWrite(t, splitted);
         //link parent to new splitted node
-        p->children[NextChildIDX(p, kv)] = splitted;
+        p->childLinks[NextChildIDX(p, kv)] = splitted_pid; //(***)
         split = true;
     }else{
         split = false;

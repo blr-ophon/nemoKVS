@@ -1,33 +1,6 @@
+#include <assert.h>
 #include "pager.h"
 
-//write to some page and return its index
-int pageWrite(PageTable *table, BPtreeNode *node){
-    //allocate a page
-    int page_n = pager_alloc(table);
-
-    //encodes node
-    uint8_t *bytestream = BPtreeNode_encode(node);
-
-    //write to said page
-    int size = BPtreeNode_getSize(node);
-    uint8_t *page = table->entries[page_n];
-    for(int i = 0; i < size; i++){
-        page[i] = bytestream[i];
-    }
-    //memcpy(page, bytestream, size);
-    //mark in table as used
-
-    //return page id
-    return page_n;
-}
-
-//reads the contents of a page as node
-BPtreeNode *pageRead(PageTable *table, int page_n){
-    //receives a page address, decodes page to a BPtreeNode
-    uint8_t *bytestream = table->entries[page_n];
-    BPtreeNode *node = BPtreeNode_decode(bytestream);
-    return node;
-}
 
 //load page 0 from file to a pager table
 PageTable *pager_init(int fd){

@@ -1,4 +1,5 @@
 #include "nodes.h"
+#include "pager.h"
 
 #define BTREE_PAGE_SIZE     4096
 #define BTREE_MAX_KEY_SIZE  1000
@@ -37,7 +38,7 @@ void BPtreeNode_print(BPtreeNode *node){
     printf("Size of data: %lu\n", node->dataSize);
     printf("Child links: ");
     for(uint32_t i = 0; i < node->nkeys+1; i++){
-        printf("%lx | ", (uint64_t) node->children[i]);
+        printf("%lx | ", node->childLinks[i]);
     }
     printf("\nKey offsets: ");
     for(uint32_t i = 0; i < node->nkeys; i++){
@@ -61,19 +62,19 @@ BPtreeNode *BPtreeNode_create(uint8_t nkeys){
     //--- as is
     BPtreeNode *rv = (BPtreeNode*) calloc(1, sizeof(BPtreeNode));
     if(nkeys){
-        rv->children = calloc(nkeys+1, sizeof(void*));
+        rv->childLinks = calloc(nkeys+1, sizeof(uint64_t));
         rv->keyOffsets = calloc(nkeys, sizeof(uint16_t));
         rv->keyOffsets[0] = 0;
         rv->key_values = NULL;              //key_values have variable size
     }else{  //used for master root
-        rv->children = calloc(1, sizeof(void*));
+        rv->childLinks = calloc(1, sizeof(uint64_t));
     }
     rv->nkeys = nkeys;
     return rv;
 }
 
 void BPtreeNode_free(BPtreeNode *node){
-    free(node->children);
+    free(node->childLinks);
     free(node->keyOffsets);
     free(node->key_values);
     free(node);
@@ -126,21 +127,21 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     }
     if(idx) *idx = newKVpos;
 
-    newNode->children[0] = node->children[0];
+    newNode->childLinks[0] = node->childLinks[0];
     int kv_idx = 0; //increased every time a kv pair from node is appended
     for(int i = 0; i < newNode->nkeys; i++){
         if(i == newKVpos){ //append kv
             BPtreeNode_appendKV(newNode, i, kv);
             if(i == 0){ //only case where the empty node comes before the inserted kv
-                newNode->children[i] = NULL;
+                newNode->childLinks[i] = 0;
             }else{
-                newNode->children[i+1] = NULL;
+                newNode->childLinks[i+1] = 0;
             }
             continue;
         }
         //append old kvs
         BPtreeNode_appendKV(newNode, i, nodeKVs[kv_idx]);
-        newNode->children[i+1] = node->children[kv_idx+1];
+        newNode->childLinks[i+1] = node->childLinks[kv_idx+1];
         kv_idx++;
     }
 
@@ -195,7 +196,7 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
     for(; i < node->nkeys+1; i++ ){
         //append or skip child 
         if(i != del_child_idx){
-            newNode->children[nn_i] = node->children[i];
+            newNode->childLinks[nn_i] = node->childLinks[i];
             nn_i++;
         }
     }
@@ -209,7 +210,7 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
 }
 
 //TODO; return int64 page address
-//Delete kv of a node. Only works for external nodes. 
+//Delete kv of a node. Only works for external nodes. Use shrink for internal
 BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
     //---- PAGE READ
     if(!node) return NULL;
@@ -262,7 +263,8 @@ BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
 
 //TODO; return int64 page address
 //splits node and returns it's pointer. returned node must be merged with parent node
-BPtreeNode *BPtreeNode_split(BPtreeNode *node){
+//BPtreeNode *BPtreeNode_split(BPtreeNode *node){
+BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node){
     //--- PAGE READ
     int i;
     bool internal = (node->type == NT_INT);
@@ -276,9 +278,9 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
         KVpair *tmpKV = BPtreeNode_getKV(node, i);
         BPtreeNode_appendKV(Lnode, i, tmpKV);
         KVpair_free(tmpKV);
-        Lnode->children[i] = node->children[i];
+        Lnode->childLinks[i] = node->childLinks[i];
     }
-    Lnode->children[i] = node->children[i];
+    Lnode->childLinks[i] = node->childLinks[i];
 
     //create parent node 
     BPtreeNode *p = BPtreeNode_create(1);
@@ -298,16 +300,18 @@ BPtreeNode *BPtreeNode_split(BPtreeNode *node){
         KVpair *tmpKV = BPtreeNode_getKV(node, i);
         BPtreeNode_appendKV(Rnode, RNode_idx, tmpKV);
         KVpair_free(tmpKV);
-        Rnode->children[RNode_idx] = node->children[i];
+        Rnode->childLinks[RNode_idx] = node->childLinks[i];
         RNode_idx++;
     }
-    Rnode->children[RNode_idx] = node->children[i];
+    Rnode->childLinks[RNode_idx] = node->childLinks[i];
 
     //link parent node to 2 children
-    p->children[0] = Lnode;
-    p->children[1] = Rnode;
-    //PAGE WRITE ALL 2 CHILDREN NODES
-    //  return node with these two 
+    int lnode_idx = nodeWrite(t, Lnode);
+    int rnode_idx = nodeWrite(t, Rnode);
+    p->childLinks[0] = lnode_idx;
+    p->childLinks[1] = rnode_idx;
+    BPtreeNode_free(Lnode);
+    BPtreeNode_free(Rnode);
     
     //destroy node
     BPtreeNode_free(node);
@@ -325,8 +329,8 @@ BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted){
     int idx = 0;
     BPtreeNode *merged = BPtreeNode_insert(node, splittedKV, &idx);
 
-    merged->children[idx] = splitted->children[0];        //left child
-    merged->children[idx+1] = splitted->children[1];      //right child
+    merged->childLinks[idx] = splitted->childLinks[0];        //left child
+    merged->childLinks[idx+1] = splitted->childLinks[1];      //right child
     
     BPtreeNode_free(splitted);
     return merged;
@@ -394,7 +398,7 @@ uint8_t *BPtreeNode_encode(BPtreeNode *node){
 
     //children
     for(int i = 0; i < node->nkeys + 1; i++){
-        memcpy(offset, &node->children[i], sizeof(uint64_t));
+        memcpy(offset, &node->childLinks[i], sizeof(uint64_t));
         offset += 8;
     }
 
@@ -425,7 +429,7 @@ BPtreeNode *BPtreeNode_decode(uint8_t *bytestream){
 
     //children
     for(int i = 0; i < node->nkeys + 1; i++){
-        memcpy(&node->children[i], &bytestream[offset], sizeof(uint64_t));
+        memcpy(&node->childLinks[i], &bytestream[offset], sizeof(uint64_t));
         offset += 8;
     }
 
@@ -438,5 +442,30 @@ BPtreeNode *BPtreeNode_decode(uint8_t *bytestream){
     //data
     memcpy(node->key_values, &bytestream[offset],  node->dataSize);
     
+    return node;
+}
+
+//write to some page and return its index
+int nodeWrite(PageTable *table, BPtreeNode *node){
+    //allocate a page
+    int page_n = pager_alloc(table);
+
+    //encodes node
+    uint8_t *bytestream = BPtreeNode_encode(node);
+
+    //write to said page
+    int size = BPtreeNode_getSize(node);
+    uint8_t *page = table->entries[page_n];
+    memcpy(page, bytestream, size);
+
+    free(bytestream);
+    return page_n;
+}
+
+//reads the contents of a page as node
+BPtreeNode *nodeRead(PageTable *table, int page_n){
+    //receives a page address, decodes page to a BPtreeNode
+    uint8_t *bytestream = table->entries[page_n];
+    BPtreeNode *node = BPtreeNode_decode(bytestream);
     return node;
 }

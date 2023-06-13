@@ -10,6 +10,7 @@
 
 #include "nodes.h"
 #include "kvpair.h"
+#include "pager.h"
 
 typedef struct{
     uint8_t degree;
