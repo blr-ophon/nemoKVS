@@ -1,5 +1,7 @@
 #include "delete.h"
 
+/*
+
 //TODO test what happens when using degree 4 and internal node becomes empty
 
 //used to update the parent node when a borrow occurs
@@ -233,3 +235,4 @@ void BPT_delete(BPtree *tree, KVpair *kv){
     shinBPT_deleteR(tree, tree->root->children[0], tree->root, kv);
 }
 
+*/

@@ -45,7 +45,7 @@ int BPtreeNode_search(BPtreeNode* node, KVpair *kv);
 BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx);
 BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx);
 
-BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node);
+BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node);                   //ONLY FUNCTION THAT WRITES
 BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted);
 BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int child_idx);
 
@@ -58,5 +58,8 @@ BPtreeNode *BPtreeNode_decode(uint8_t *bytestream);
 
 int nodeWrite(PageTable *table, BPtreeNode *node);
 BPtreeNode *nodeRead(PageTable *table, int page_n);
+void nodeOverwrite(PageTable *table, uint64_t page_n, BPtreeNode *node);
+void linkUpdate(PageTable *t, uint64_t node_pid, int child_id, uint64_t newLink);
+void node_free(PageTable *t, uint64_t node_pid);
 
 #endif

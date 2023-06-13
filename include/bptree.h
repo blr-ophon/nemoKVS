@@ -14,17 +14,17 @@
 
 typedef struct{
     uint8_t degree;
-    BPtreeNode *root;
+    uint64_t Mroot_id;
     //root 
 }BPtree;
 
-void BPtree_print(BPtree *tree);
+void BPtree_print(PageTable *t, BPtree *tree);
 
-BPtree *BPtree_create(uint8_t degree);
+BPtree *BPtree_create(PageTable *t, uint8_t degree);
 void BPtree_free(BPtree *ptr);
 
-void BPtree_insert(BPtree *tree, KVpair *kv);
-BPtreeNode *BPtree_search(BPtree *btree, KVpair *kv, int *idx);
+void BPtree_insert(PageTable *t, BPtree *tree, KVpair *kv);
+BPtreeNode *BPtree_search(PageTable *t, BPtree *tree, KVpair *kv, int *idx);
 void BPtree_delete(BPtree *tree, KVpair *kv);
 
 int NextChildIDX(BPtreeNode *node, KVpair *kv);

@@ -2,6 +2,8 @@
 #include <time.h>
 #include <stdlib.h>
 
+/*
+
 //ERROR: degree 4, n = 10
 //16, 19, 16, 10, 19, 28, 1, 28, 25, 28
 
@@ -216,3 +218,4 @@ void DBtests_revorder(BPtree *tree, int n){
     free(KVs);
     printf("\n");
 }
+*/

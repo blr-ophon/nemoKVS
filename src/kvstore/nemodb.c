@@ -59,27 +59,36 @@ int main(void){
     }
     printf("Database loaded\n");
 
-    BPtreeNode *node = BPtreeNode_create(4);
-    createTestNode(node);
-    pageWrite(db->table, node);
-    pageWrite(db->table, node);
-    pageWrite(db->table, node);
-    pageWrite(db->table, node);
-    pager_free(db->table, 2);
-    pageWrite(db->table, node);
-    pager_free(db->table, 3);
-    pageWrite(db->table, node);
-    pageWrite(db->table, node);
-    pager_free(db->table, 4);
-    pageWrite(db->table, node);
-    pageWrite(db->table, node);
-    pager_free(db->table, 5);
-    pageWrite(db->table, node);
-    pageWrite(db->table, node);
-    pager_free(db->table, 6);
-    pageWrite(db->table, node);
-    pager_free(db->table, 7);
-    pageWrite(db->table, node);
+    KVpair *kv1 = KVpair_create(1, 9, "1", "test-key1");
+    KVpair *kv2 = KVpair_create(1, 9, "2", "test-key2");
+    KVpair *kv3 = KVpair_create(1, 9, "3", "test-key3");
+
+    BPtree *tree = BPtree_create(db->table, 4);
+    BPtree_insert(db->table, tree, kv1);
+    BPtree_insert(db->table, tree, kv2);
+    BPtree_insert(db->table, tree, kv3);
+
+    //BPtreeNode *node = BPtreeNode_create(4);
+    //createTestNode(node);
+    //pageWrite(db->table, node);
+    //pageWrite(db->table, node);
+    //pageWrite(db->table, node);
+    //pageWrite(db->table, node);
+    //pager_free(db->table, 2);
+    //pageWrite(db->table, node);
+    //pager_free(db->table, 3);
+    //pageWrite(db->table, node);
+    //pageWrite(db->table, node);
+    //pager_free(db->table, 4);
+    //pageWrite(db->table, node);
+    //pageWrite(db->table, node);
+    //pager_free(db->table, 5);
+    //pageWrite(db->table, node);
+    //pageWrite(db->table, node);
+    //pager_free(db->table, 6);
+    //pageWrite(db->table, node);
+    //pager_free(db->table, 7);
+    //pageWrite(db->table, node);
 
     //uint8_t data1[7] = {1,2,3,4,5,6,7};
     //DB_Insert(db, "testkey1", data1, 7);
@@ -133,7 +142,7 @@ void DB_create(char *name, int node_len){
     chmod(dbfile, S_IRUSR | S_IWUSR);
     
     //create page table 
-    uint8_t *emptyPages = calloc(1, 2*getpagesize());
+    uint8_t *emptyPages = calloc(1, getpagesize());
 
     uint32_t page_num = 2;  //page 0 and 1
     memcpy(&emptyPages[0], &page_num, sizeof(uint32_t));
@@ -145,6 +154,7 @@ void DB_create(char *name, int node_len){
     write(fd, emptyPages, 2*getpagesize());
     free(emptyPages);
 
+    /*
     //create master root 
     BPtree *tree = BPtree_create(node_len);
     int node_size = BPtreeNode_getSize(tree->root);
@@ -153,6 +163,7 @@ void DB_create(char *name, int node_len){
     //write master root 
     lseek(fd, 1*getpagesize(), SEEK_SET);
     write(fd, bytestream, node_size);
+    */
 
     close(fd);
 }

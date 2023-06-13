@@ -75,8 +75,8 @@ int pager_alloc(PageTable *table){
     return table->len -1;
 }
 
-void pager_free(PageTable *table, int page_n){
-    assert(page_n >= 2);
-    table->pageMap[page_n +4] = 0;
+void pager_free(PageTable *table, uint64_t pid){
+    assert(pid >= 2);
+    table->pageMap[pid +4] = 0;
     //TODO: unmap entry
 }

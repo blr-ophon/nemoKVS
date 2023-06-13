@@ -6,7 +6,7 @@
 //then try to reduce them.
 
 
-void BPtree_print(BPtree *tree){
+void BPtree_print(PageTable *t, BPtree *tree){
     if(!tree){
         printf("> Empty tree\n");
         return;
@@ -14,38 +14,41 @@ void BPtree_print(BPtree *tree){
     printf("\n====== TREE ======\n");
     printf("Degree: %d\n", tree->degree); 
     printf("Root:");
-    BPtreeNode_print(tree->root);
+    BPtreeNode *Mroot = nodeRead(t, tree->Mroot_id);
+    BPtreeNode_print(Mroot);
 }
 
 //TODO: append master root record to the datafile
-BPtree *BPtree_create(uint8_t degree){
+BPtree *BPtree_create(PageTable *t, uint8_t degree){
     BPtree *rv = calloc(1, sizeof(BPtree));
     rv->degree = degree;
 
     //master root
-    rv->root = BPtreeNode_create(0);
-    rv->root->type = NT_ROOT;
-    rv->root->nkeys = 0;
-    rv->root->childLinks[0] = 0;       //tree root
+    BPtreeNode *Mroot = BPtreeNode_create(0);
+    Mroot->type = NT_ROOT;
+    Mroot->nkeys = 0;
+    Mroot->childLinks[0] = 0;       //tree root
+    nodeOverwrite(t, 1, Mroot);
+    rv->Mroot_id = 1;
 
     return rv;
 }
 
 //TODO: free becomes deletion from file
-static void BPtree_free_rec(BPtreeNode *node){
-    if(node == NULL) return;
-
-    for(int i = 0; i < node->nkeys; i++){
-        BPtree_free_rec(node->children[i]);
-    }
-    BPtreeNode_free(node);
-}
+//static void BPtree_free_rec(BPtreeNode *node){
+//    if(node == NULL) return;
+//
+//    for(int i = 0; i < node->nkeys; i++){
+//        BPtree_free_rec(node->children[i]);
+//    }
+//    BPtreeNode_free(node);
+//}
 
 //TODO: free becomes deletion from file
-void BPtree_free(BPtree *ptr){
-    BPtree_free_rec(ptr->root);
-    free(ptr);
-}
+//void BPtree_free(BPtree *ptr){
+//    BPtree_free_rec(ptr->root);
+//    free(ptr);
+//}
 
 //returns ID of the next child. Used to traverse the tree
 int NextChildIDX(BPtreeNode *node, KVpair *kv){
@@ -63,130 +66,86 @@ int NextChildIDX(BPtreeNode *node, KVpair *kv){
     return node->nkeys;
 }
 
+
 //static bool BPtree_insertR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
-static bool BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_t p_pid, KVpair *kv){
+static BPtreeNode *BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_t p_pid, KVpair *kv){
     //TODO: free all bptreeNodes
+    //TODO: remove tree struct, splitting based on node size
     //TODO: see when nodes should be written
+    //TODO: write only if no mergeSplitted occur
+    //
     BPtreeNode *node = nodeRead(t, node_pid);
     BPtreeNode *p = nodeRead(t, p_pid);
-    bool split = false;
+    BPtreeNode *spl = NULL;
 
     if(node->type == NT_EXT){
         //insert kv
         BPtreeNode *inserted = BPtreeNode_insert(node, kv, NULL);
         inserted->type = NT_EXT;
-        //TODO: write only if no mergeSplitted occur
-        int inserted_pid = nodeWrite(t, inserted);
         node = inserted;
-        //link parent to new node with inserted value
-        p->childLinks[NextChildIDX(p, kv)] = inserted_pid; //(***)
-
     }else{
         //traverse next children
         uint64_t next_pid = node->childLinks[NextChildIDX(node, kv)];
-        split = BPtree_insertR(tree, t, next_pid, node_pid, kv);
+        spl = BPtree_insertR(tree, t, next_pid, node_pid, kv);
     }
 
-    if(split){
+    if(spl){
         //merge node with it`s child that splitted
-        uint64_t splittedChild_pid = node->childLinks[NextChildIDX(node,kv)];
-        BPtreeNode *splittedChild = nodeRead(t, splittedChild_pid);
-        BPtreeNode *merged = BPtreeNode_mergeSplitted(node, splittedChild);
-        int merged_pid = nodeWrite(t, merged);
+        BPtreeNode *merged = BPtreeNode_mergeSplitted(node, spl);
         node = merged;
-        //link parent to new merged node
-        p->childLinks[NextChildIDX(p, kv)] = merged_pid; //(***)
     }
 
     //if insert or merging makes node full
     if(node->nkeys >= tree->degree){
         //split
         BPtreeNode *splitted = BPtreeNode_split(t, node);
-        int splitted_pid = nodeWrite(t, splitted);
-        //link parent to new splitted node
-        p->childLinks[NextChildIDX(p, kv)] = splitted_pid; //(***)
-        split = true;
+        spl = splitted;
     }else{
-        split = false;
+        uint64_t newNode = nodeWrite(t, node);
+        //update p to link to node_pid
+        int child_id = NextChildIDX(p, kv);
+        linkUpdate(t, p_pid, child_id, newNode);
+        //free old node
+        node_free(t, node_pid);
+        spl = NULL;
     }
 
-    return split;
+    return spl;
 }
 
-void BPtree_insert(BPtree *tree, KVpair *kv){
-    if(!tree->root->children[0]){
-        //Empty tree. Create first node and insert KV
-        tree->root->children[0] = BPtreeNode_create(1);
-        tree->root->children[0]->type = NT_EXT;
-        BPtreeNode_appendKV(tree->root->children[0], 0,  kv);
-        
-        //tree->root->children[0] = BPtreeNode_insert(tree->root->children[0], kv);
+void BPtree_insert(PageTable *t, BPtree *tree, KVpair *kv){
+    BPtreeNode *masterRoot = nodeRead(t, tree->Mroot_id);
+    uint64_t root_id =  masterRoot->childLinks[0];
+
+    if(!root_id){
+        //if master root points to no root, create one
+        BPtreeNode *root = BPtreeNode_create(1);
+        root->type = NT_EXT;
+        BPtreeNode_appendKV(root, 0,  kv);
+        root_id = nodeWrite(t, root);
+        linkUpdate(t, tree->Mroot_id, 0, root_id);
         return;
     }
 
-    BPtree_insertR(tree, tree->root->children[0], tree->root, kv);
+    BPtree_insertR(tree, t, root_id, tree->Mroot_id, kv);
 }
 
 //returns node pointer and the id of the key in idx
-BPtreeNode *BPtree_search(BPtree *tree, KVpair *kv, int *idx){
+BPtreeNode *BPtree_search(PageTable *t, BPtree *tree, KVpair *kv, int *idx){
     //traverse until reach an external node
-    BPtreeNode *tmp = tree->root->children[0];
-    if(!tmp) return NULL;
+    BPtreeNode *mroot = nodeRead(t, tree->Mroot_id);
+    if(!mroot->childLinks[0]) return NULL;
+    
+    BPtreeNode *tmp = nodeRead(t, mroot->childLinks[0]);
     while(tmp->type != NT_EXT){
-        tmp = tmp->children[NextChildIDX(tmp, kv)];
+        int child_id = NextChildIDX(tmp, kv);
+        tmp = nodeRead(t, tmp->childLinks[child_id]);
     }
+
+    //find of the key in the node
     int rv = BPtreeNode_search(tmp, kv);
-
     if(rv < 0) return NULL;
-
     if(idx) *idx = rv;
+
     return tmp;
 }
-
-bool BPtree_deleteR(BPtreeNode *node, BPtreeNode *p, KVpair *kv){
-    bool emptyChild = false;
-    if(node->type == NT_EXT){
-        //search kv pair and remove if it exists
-        BPtreeNode *deleted = BPtreeNode_delete(node, kv, NULL); 
-        if(!deleted) return false; //kv not found in node
-        //link to parent 
-        p->children[NextChildIDX(p,kv)] = deleted;
-        node = deleted;
-
-    }else{
-        //traverse next children
-        BPtreeNode *next = node->children[NextChildIDX(node, kv)];
-        emptyChild = BPtree_deleteR(next, node, kv);
-    }
-
-    if(emptyChild){ //shrink internal node by removing one of its kvs 
-        //find the empty child
-        int child_idx = NextChildIDX(node,kv);
-        BPtreeNode *shrinked = BPtreeNode_shrink(node, child_idx);  
-        //link to parent 
-        p->children[NextChildIDX(p, kv)] = shrinked;
-        node = shrinked;
-    }
-
-    //if deleting or shrinking makes node empty 
-    if(node->nkeys == 0){ //split
-        //free node and unlink from parent
-        BPtreeNode_free(node);
-        p->children[NextChildIDX(p, kv)] = NULL;
-        emptyChild = true;
-    }else{
-        emptyChild = false;
-    }
-
-    return emptyChild;
-}
-
-void BPtree_delete(BPtree *tree, KVpair *kv){
-    if(!tree) return;
-    if(!tree->root) return;
-    if(!tree->root->children[0]) return;
-
-    BPtreeNode *mroot = tree->root;
-    BPtree_deleteR(mroot->children[0], mroot, kv);
-}
-

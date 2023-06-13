@@ -409,7 +409,9 @@ uint8_t *BPtreeNode_encode(BPtreeNode *node){
     }
 
     //data
-    memcpy(offset, node->key_values, node->dataSize);
+    if(node->nkeys){
+        memcpy(offset, node->key_values, node->dataSize);
+    }
 
     return bytestream;
 }
@@ -434,13 +436,16 @@ BPtreeNode *BPtreeNode_decode(uint8_t *bytestream){
     }
 
     //offsets
-    for(int i = 0; i < node->nkeys + 1; i++){
+    for(int i = 0; i < node->nkeys; i++){
         memcpy(&node->keyOffsets[i], &bytestream[offset], sizeof(uint16_t));
         offset += 2;
     }
 
     //data
-    memcpy(node->key_values, &bytestream[offset],  node->dataSize);
+    if(node->nkeys){
+        node->key_values = malloc(node->dataSize);
+        memcpy(node->key_values, &bytestream[offset],  node->dataSize);
+    }
     
     return node;
 }
@@ -468,4 +473,27 @@ BPtreeNode *nodeRead(PageTable *table, int page_n){
     uint8_t *bytestream = table->entries[page_n];
     BPtreeNode *node = BPtreeNode_decode(bytestream);
     return node;
+}
+
+void nodeOverwrite(PageTable *table, uint64_t page_n, BPtreeNode *node){
+    //encodes node
+    uint8_t *bytestream = BPtreeNode_encode(node);
+
+    //write to said page
+    int size = BPtreeNode_getSize(node);
+    uint8_t *page = table->entries[page_n];
+    memcpy(page, bytestream, size);
+
+    free(bytestream);
+}
+
+void node_free(PageTable *t, uint64_t node_pid){
+    pager_free(t, node_pid);    
+}
+
+//updates childLink[child_id] to newLink and overwrites node
+void linkUpdate(PageTable *t, uint64_t node_pid, int child_id, uint64_t newLink){
+    BPtreeNode *node = nodeRead(t, node_pid);
+    node->childLinks[child_id] = newLink;
+    nodeOverwrite(t, node_pid, node);
 }
