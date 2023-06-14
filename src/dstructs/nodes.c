@@ -336,6 +336,55 @@ BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted){
     return merged;
 }
 
+//To be used with split. Merges 'splited' node with it's parent
+//expects splitted to be of size 1, coming from a split
+//expects splitted and node to be internal nodes
+//Same as insert, but inserts at an specific place. TODO: insert becomes useless for 
+//internal nodes, reduce its code.
+//idx is necessary because the internal node may have repeated keys, to which the
+//splitted may be inserted before in the sequence
+BPtreeNode *BPtreeNode_shinMergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int ptospl_idx){
+    KVpair **KVs = malloc(node->nkeys * sizeof(void*));
+    for(int i = 0; i < node->nkeys; i++){
+        KVs[i] = BPtreeNode_getKV(node, i);
+    }
+    KVpair *newKV = BPtreeNode_getKV(splitted, 0);
+
+    BPtreeNode *merged = BPtreeNode_create(node->nkeys+1);
+
+    //append keys
+    int node_idx = 0;       //iterator for node
+    for(int i = 0; i < merged->nkeys; i++){
+        if(i == ptospl_idx){    //In this operation, the idx from node of the splitted child
+                                //is equal to the kv idx where it will be inserted
+            BPtreeNode_appendKV(merged, i, newKV);
+        }else{
+            BPtreeNode_appendKV(merged, i, KVs[node_idx++]);
+        }
+    }
+
+    //append children 
+    node_idx = 0;
+    for(int i = 0; i < merged->nkeys +1; i++){
+        if(i == ptospl_idx){
+            i++;
+        }
+        merged->childLinks[i] = node->childLinks[node_idx++];
+    }
+    merged->childLinks[ptospl_idx] = splitted->childLinks[0];
+    merged->childLinks[ptospl_idx+1] = splitted->childLinks[1];
+    
+    //free memory and return
+    for(int i = 0; i < node->nkeys; i++){
+        KVpair_free(KVs[i]);
+    }
+    free(KVs);
+    BPtreeNode_free(node);
+    BPtreeNode_free(splitted);
+    return merged;
+}
+
+
 KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){
     if(idx + 1 > node->nkeys){ 
         return NULL;

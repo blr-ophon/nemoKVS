@@ -38,14 +38,6 @@
 //kvpair.c except for 1 that was in tree or node, gotta look past commits 
 //to confirm where)
 
-
-void createTestNode(BPtreeNode *node){
-    node->type = 0x77;
-    for(int i = 0; i < node->nkeys; i++){
-        node->keyOffsets[i] = 10*i;
-    }
-}
-
 int main(void){
     //BPtree *tree = BPtree_create(4);
     //BPtree_print(tree);
@@ -98,28 +90,6 @@ int main(void){
     }else{
         printf("kv NOT found\n");
     }
-
-    //BPtreeNode *node = BPtreeNode_create(4);
-    //createTestNode(node);
-    //pageWrite(db->table, node);
-    //pageWrite(db->table, node);
-    //pageWrite(db->table, node);
-    //pageWrite(db->table, node);
-    //pager_free(db->table, 2);
-    //pageWrite(db->table, node);
-    //pager_free(db->table, 3);
-    //pageWrite(db->table, node);
-    //pageWrite(db->table, node);
-    //pager_free(db->table, 4);
-    //pageWrite(db->table, node);
-    //pageWrite(db->table, node);
-    //pager_free(db->table, 5);
-    //pageWrite(db->table, node);
-    //pageWrite(db->table, node);
-    //pager_free(db->table, 6);
-    //pageWrite(db->table, node);
-    //pager_free(db->table, 7);
-    //pageWrite(db->table, node);
 
     //uint8_t data1[7] = {1,2,3,4,5,6,7};
     //DB_Insert(db, "testkey1", data1, 7);

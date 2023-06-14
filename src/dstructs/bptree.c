@@ -94,7 +94,8 @@ static BPtreeNode *BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_pid,
 
     if(spl){
         //merge node with it`s child that splitted
-        BPtreeNode *merged = BPtreeNode_mergeSplitted(node, spl);
+        //BPtreeNode *merged = BPtreeNode_mergeSplitted(node, spl);
+        BPtreeNode *merged = BPtreeNode_shinMergeSplitted(node, spl, NextChildIDX(node,kv));
         node = merged;
         tryWrite = true;
     }
