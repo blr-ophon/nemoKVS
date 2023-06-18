@@ -545,4 +545,5 @@ void linkUpdate(PageTable *t, uint64_t node_pid, int child_id, uint64_t newLink)
     BPtreeNode *node = nodeRead(t, node_pid);
     node->childLinks[child_id] = newLink;
     nodeOverwrite(t, node_pid, node);
+    BPtreeNode_free(node);
 }
