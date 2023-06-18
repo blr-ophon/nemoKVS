@@ -61,29 +61,38 @@ int main(void){
     KVpair *kv8 = KVpair_create(1, 9, "8", "test-key8");
     KVpair *kv9 = KVpair_create(1, 9, "9", "test-key9");
     KVpair *kvA = KVpair_create(2, 10, "10", "test-key10");
+    KVpair *kvB = KVpair_create(2, 10, "11", "test-key11");
+    KVpair *kvC = KVpair_create(2, 10, "12", "test-key12");
 
     BPtree *tree = BPtree_create(db->table, 4);
-    //BPtree_insert(db->table, tree, kv1);
-    //BPtree_insert(db->table, tree, kv2);
-    //BPtree_insert(db->table, tree, kv3);
-    //BPtree_insert(db->table, tree, kv4);
-    //BPtree_insert(db->table, tree, kv5);
-    //BPtree_insert(db->table, tree, kv6);
-    //BPtree_insert(db->table, tree, kv7);
-    //BPtree_insert(db->table, tree, kv8);
-    //BPtree_insert(db->table, tree, kv9);
-    //BPtree_insert(db->table, tree, kvA);
+    BPtree_insert(db->table, tree, kv1);
+    BPtree_insert(db->table, tree, kv2);
+    BPtree_insert(db->table, tree, kv3);
+    BPtree_insert(db->table, tree, kv4);
+    BPtree_insert(db->table, tree, kv5);
+    BPtree_insert(db->table, tree, kv6);
+    BPtree_insert(db->table, tree, kv7);
+    BPtree_insert(db->table, tree, kv8);
+    BPtree_insert(db->table, tree, kv9);
+    BPtree_insert(db->table, tree, kvA);
+    BPtree_insert(db->table, tree, kvB);
+    BPtree_insert(db->table, tree, kvC);
 
+
+    /*
+    BPtree_insert(db->table, tree, kvC);
+    BPtree_insert(db->table, tree, kvB);
     BPtree_insert(db->table, tree, kvA);
     BPtree_insert(db->table, tree, kv9);
     BPtree_insert(db->table, tree, kv8);
     BPtree_insert(db->table, tree, kv7);
-    //BPtree_insert(db->table, tree, kv6);
+    BPtree_insert(db->table, tree, kv6);
     BPtree_insert(db->table, tree, kv5);
     BPtree_insert(db->table, tree, kv4);
     BPtree_insert(db->table, tree, kv3);
     BPtree_insert(db->table, tree, kv2);
     BPtree_insert(db->table, tree, kv1);
+    */
 
     if(BPtree_search(db->table, tree, kv6, NULL)){
         printf("kv found\n");
