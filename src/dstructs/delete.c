@@ -263,7 +263,6 @@ typedef struct{
     KVpair *leftmostKV;     //returned when a kv pair must be updated in one or more parents
 }ret_flags;
 
-//ret_flags shinBPT_deleteR(BPtree *tree, BPtreeNode *node, BPtreeNode *p, KVpair *kv){
 ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_t p_pid, KVpair *kv){
     BPtreeNode *node = nodeRead(t, node_pid);
     BPtreeNode *p = nodeRead(t, p_pid);

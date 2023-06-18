@@ -83,7 +83,6 @@ static BPtreeNode *BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_pid,
     if(node->type == NT_EXT){
         //insert kv
         BPtreeNode *inserted = BPtreeNode_insert(node, kv, NULL);
-        inserted->type = NT_EXT;
         node = inserted;
         tryWrite = true;
     }else{

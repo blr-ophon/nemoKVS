@@ -43,7 +43,7 @@ int main(void){
     //BPtree_print(tree);
 
     //DBtests_all(tree, 10);
-    DB_create("test_db", 4);
+    DB_create("test_db", 6);
     Database *db = DB_load("test_db");
     if(!db){
         printf("database not found\n");
@@ -64,19 +64,30 @@ int main(void){
     KVpair *kvB = KVpair_create(2, 10, "11", "test-key11");
     KVpair *kvC = KVpair_create(2, 10, "12", "test-key12");
 
-    BPtree *tree = BPtree_create(db->table, 4);
+    BPtree *tree = BPtree_create(db->table, 6);
     BPtree_insert(db->table, tree, kv1);
     BPtree_insert(db->table, tree, kv2);
-    BPtree_insert(db->table, tree, kv3);
     BPtree_insert(db->table, tree, kv4);
     BPtree_insert(db->table, tree, kv5);
+    BPtree_insert(db->table, tree, kv3);
     BPtree_insert(db->table, tree, kv6);
     BPtree_insert(db->table, tree, kv7);
     BPtree_insert(db->table, tree, kv8);
     BPtree_insert(db->table, tree, kv9);
     BPtree_insert(db->table, tree, kvA);
-    BPtree_insert(db->table, tree, kvB);
-    BPtree_insert(db->table, tree, kvC);
+
+    /*
+    BPT_delete(db->table, tree, kv1);
+    BPT_delete(db->table, tree, kv9);
+    BPT_delete(db->table, tree, kv2);
+    BPT_delete(db->table, tree, kv5);
+    BPT_delete(db->table, tree, kv4);
+    BPT_delete(db->table, tree, kv3);
+    BPT_delete(db->table, tree, kv6);
+    BPT_delete(db->table, tree, kv7);
+    BPT_delete(db->table, tree, kv8);
+    BPT_delete(db->table, tree, kvA);
+    */
 
 
     /*
