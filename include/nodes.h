@@ -20,9 +20,9 @@
 //-each page contains a node
 //
 enum NODE_TYPE{
-    NT_INT,          //internal 
-    NT_EXT,          //external
-    NT_ROOT
+    NT_INT = 'I',          //internal 
+    NT_EXT = 'E',          //external
+    NT_ROOT = 'R'
 };
 
 
