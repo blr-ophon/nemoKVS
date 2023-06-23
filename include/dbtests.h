@@ -11,7 +11,7 @@ void DBtests_inorder(PageTable *t, BPtree *tree, int n);
 
 void DBtests_revorder(PageTable *t, BPtree *tree, int n);
 
-void DBtests_randorder(PageTable *t, BPtree *tree, int n);
+int DBtests_randorder(PageTable *t, BPtree *tree, int n);
 
 int DBtests_search(PageTable *t, BPtree *tree, KVpair **KVs, int n);
 

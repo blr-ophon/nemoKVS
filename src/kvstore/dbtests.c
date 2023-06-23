@@ -4,10 +4,16 @@
 
 
 void DBtests_all(PageTable *t,BPtree *tree, int n){
-    DBtests_custom(t, tree);
-    //DBtests_inorder(t, tree, n);
-    //DBtests_revorder(t, tree, n);
-    //DBtests_randorder(t, tree, n);
+    //DBtests_custom(t, tree);
+    DBtests_inorder(t, tree, n);
+    DBtests_revorder(t, tree, n);
+    DBtests_randorder(t, tree, n);
+    for(int i = 0; i < 100; i++){
+        if(DBtests_randorder(t, tree, n) < 0){
+            printf("> Found remaining keys\n");
+            break;
+        }
+    }
 }
 
 //ERROR: degree 4, n = 10
@@ -80,8 +86,7 @@ int DBtests_search(PageTable *t, BPtree *tree, KVpair **KVs, int n){
     return search_kv_n;
 }
 
-
-void DBtests_randorder(PageTable *t, BPtree *tree, int n){
+int DBtests_randorder(PageTable *t, BPtree *tree, int n){
     KVpair **KVs = malloc(n*sizeof(void*));
     int i;
     srand(time(NULL));
@@ -112,8 +117,9 @@ void DBtests_randorder(PageTable *t, BPtree *tree, int n){
     }
     printf("%d key-value pairs successfully deleted\n", i);
 
-    //try search
-    if(DBtests_search(t, tree, KVs, n)){
+    //try search. Check if there are remaining keys
+    int rmn_keys = DBtests_search(t, tree, KVs, n);  
+    if(rmn_keys){
         printf("Keys: \n");
         for(i = 0; i < n; i++){
             printf("%s ", KVs[i]->key);
@@ -121,15 +127,19 @@ void DBtests_randorder(PageTable *t, BPtree *tree, int n){
         printf("\n");
     }
 
-
-
     //free
     for(int i = 0; i < n; i++){
         KVpair_free(KVs[i]);
     }
     free(KVs);
     printf("\n");
+
+    if(rmn_keys > 0){
+        return -1;
+    }
+    return 0;
 }
+
 
 void DBtests_inorder(PageTable *t, BPtree *tree, int n){
     KVpair **KVs = malloc(n*sizeof(void*));

@@ -325,6 +325,9 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
 
 
     if(rv.smallNode){
+        //update node and p
+        node = nodeRead(t, node_pid);
+        p = nodeRead(t, p_pid);
         /*
          * Merge or split
          */
