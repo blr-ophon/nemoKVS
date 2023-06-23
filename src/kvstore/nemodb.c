@@ -54,9 +54,9 @@ int main(void){
     //tree struct is kinda useless, degree wont be a thing once
     //node pages are used instead and Mroot id is always 1. create
     //a MROOT_PAGE_ID 1
-    BPtree *tree = BPtree_create(db->table, 4);
+    BPtree *tree = BPtree_create(db->table, 6);
 
-    DBtests_all(db->table, tree, 10);
+    DBtests_all(db->table, tree, 100);
 
     //uint8_t data1[7] = {1,2,3,4,5,6,7};
     //DB_Insert(db, "testkey1", data1, 7);

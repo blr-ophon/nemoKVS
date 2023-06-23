@@ -308,6 +308,12 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
         int next_pid = node->childLinks[nodetonext_idx];
         rv = shinBPT_deleteR(tree, t, next_pid, node_pid, kv);
         if(rv.leftmostKV){
+            //update node and p
+            node = nodeRead(t, node_pid);
+            p = nodeRead(t, p_pid);
+            /*
+             * swap keys to new leftmost
+             */
             if(nodetonext_idx != 0){
                 BPtreeNode *swapped = BPTNode_swapKey(node, nodetonext_idx-1, rv.leftmostKV);
                 node = swapped;
