@@ -46,7 +46,7 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx);
 BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx);
 
 BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node);                   //ONLY FUNCTION THAT WRITES
-BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted);
+//BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted);
 BPtreeNode *BPtreeNode_shinMergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int ptospl_idx);
 BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int child_idx);
 

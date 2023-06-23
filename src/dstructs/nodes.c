@@ -351,6 +351,7 @@ BPtreeNode *BPtreeNode_shinMergeSplitted(BPtreeNode *node, BPtreeNode *splitted,
     KVpair *newKV = BPtreeNode_getKV(splitted, 0);
 
     BPtreeNode *merged = BPtreeNode_create(node->nkeys+1);
+    merged->type = NT_INT;
 
     //append keys
     int node_idx = 0;       //iterator for node
