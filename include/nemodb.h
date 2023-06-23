@@ -22,12 +22,13 @@ typedef struct database{
     char *name;
     char *path;
     PageTable *table;
+    BPtree *tree;
 
     //Datafile datafile;
 }Database;
 
 
-void DB_create(char *name, int node_len);
+void DB_create(char *name);
 Database *DB_load(char *dbname);
 
 void DB_free(Database *db);

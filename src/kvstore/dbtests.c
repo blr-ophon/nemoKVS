@@ -2,13 +2,11 @@
 #include <time.h>
 #include <stdlib.h>
 
-/*
 
 //ERROR: degree 4, n = 10
 //16, 19, 16, 10, 19, 28, 1, 28, 25, 28
 
-void DBtests_custom(BPtree *tree){
-    BPtreeNode *root = tree->root;
+void DBtests_custom(PageTable *t, BPtree *tree){
     int n = 10;
     KVpair **KVs = malloc(n*sizeof(void*));
     int i;
@@ -28,19 +26,19 @@ void DBtests_custom(BPtree *tree){
 
     //insert
     for(i = 0; i < n; i++){
-        BPtree_insert(tree, KVs[i]);
+        BPtree_insert(t, tree, KVs[i]);
     }
     printf("%d key-value pairs successfully inserted (IN ORDER)\n", i);
-    DBtests_search(tree, KVs, n);
+    DBtests_search(t, tree, KVs, n);
 
     //delete
     for(i = 0; i < n; i++){
-        BPtree_delete(tree, KVs[i]);
+        BPT_delete(t, tree, KVs[i]);
     }
     printf("%d key-value pairs successfully deleted (IN ORDER)\n", i);
 
     //try search
-    if(DBtests_search(tree, KVs, n)){
+    if(DBtests_search(t, tree, KVs, n)){
         printf("Keys: \n");
         for(i = 0; i < n; i++){
             printf("%s ", KVs[i]->key);
@@ -56,12 +54,12 @@ void DBtests_custom(BPtree *tree){
     printf("\n");
 }
 
-int DBtests_search(BPtree *tree, KVpair **KVs, int n){
+int DBtests_search(PageTable *t, BPtree *tree, KVpair **KVs, int n){
     int i;
     //try search
     int search_kv_n = 0;
     for(i = 0; i < n; i++){
-        if(BPtree_search(tree, KVs[i], NULL)){
+        if(BPtree_search(t,tree, KVs[i], NULL)){
             search_kv_n++;
             //printf("KV[%d] found\n", i);
         }
@@ -72,14 +70,14 @@ int DBtests_search(BPtree *tree, KVpair **KVs, int n){
     return search_kv_n;
 }
 
-void DBtests_all(BPtree *tree, int n){
+void DBtests_all(PageTable *t,BPtree *tree, int n){
     //DBtests_custom(tree);
-    DBtests_inorder(tree, n);
-    DBtests_revorder(tree, n);
-    DBtests_randorder(tree, n);
+    DBtests_inorder(t, tree, n);
+    DBtests_revorder(t, tree, n);
+    //DBtests_randorder(t, tree, n);
 }
 
-void DBtests_randorder(BPtree *tree, int n){
+void DBtests_randorder(PageTable *t, BPtree *tree, int n){
     KVpair **KVs = malloc(n*sizeof(void*));
     int i;
     srand(time(NULL));
@@ -98,19 +96,19 @@ void DBtests_randorder(BPtree *tree, int n){
 
     //insert
     for(i = 0; i < n; i++){
-        BPtree_insert(tree, KVs[i]);
+        BPtree_insert(t, tree, KVs[i]);
     }
     printf("%d key-value pairs successfully inserted\n", i);
-    DBtests_search(tree, KVs, n);
+    DBtests_search(t, tree, KVs, n);
 
     //delete
     for(i = 0; i < n; i++){
-        BPtree_delete(tree, KVs[i]);
+        BPT_delete(t, tree, KVs[i]);
     }
     printf("%d key-value pairs successfully deleted\n", i);
 
     //try search
-    if(DBtests_search(tree, KVs, n)){
+    if(DBtests_search(t, tree, KVs, n)){
         printf("Keys: \n");
         for(i = 0; i < n; i++){
             printf("%s ", KVs[i]->key);
@@ -128,7 +126,7 @@ void DBtests_randorder(BPtree *tree, int n){
     printf("\n");
 }
 
-void DBtests_inorder(BPtree *tree, int n){
+void DBtests_inorder(PageTable *t, BPtree *tree, int n){
     KVpair **KVs = malloc(n*sizeof(void*));
     int i;
 
@@ -145,19 +143,19 @@ void DBtests_inorder(BPtree *tree, int n){
 
     //insert
     for(i = 0; i < n; i++){
-        BPtree_insert(tree, KVs[i]);
+        BPtree_insert(t, tree, KVs[i]);
     }
     printf("%d key-value pairs successfully inserted (IN ORDER)\n", i);
-    DBtests_search(tree, KVs, n);
+    DBtests_search(t, tree, KVs, n);
 
     //delete
     for(i = 0; i < n; i++){
-        BPtree_delete(tree, KVs[i]);
+        BPT_delete(t, tree, KVs[i]);
     }
     printf("%d key-value pairs successfully deleted (IN ORDER)\n", i);
 
     //try search
-    if(DBtests_search(tree, KVs, n)){
+    if(DBtests_search(t, tree, KVs, n)){
         printf("Keys: \n");
         for(i = 0; i < n; i++){
             printf("%s ", KVs[i]->key);
@@ -173,7 +171,7 @@ void DBtests_inorder(BPtree *tree, int n){
     printf("\n");
 }
 
-void DBtests_revorder(BPtree *tree, int n){
+void DBtests_revorder(PageTable *t, BPtree *tree, int n){
     KVpair **KVs = malloc(n*sizeof(void*));
     int i;
 
@@ -190,20 +188,20 @@ void DBtests_revorder(BPtree *tree, int n){
 
     //insert
     for(i = 0; i < n; i++){
-        BPtree_insert(tree, KVs[n-1 - i]);
+        BPtree_insert(t, tree, KVs[n-1 - i]);
     }
     printf("%d key-value pairs successfully inserted (IN REVERSE ORDER)\n", i);
 
-    DBtests_search(tree, KVs, n);
+    DBtests_search(t, tree, KVs, n);
 
     //delete
     for(i = 0; i < n; i++){
-        BPtree_delete(tree, KVs[n-1 - i]);
+        BPT_delete(t, tree, KVs[n-1 - i]);
     }
     printf("%d key-value pairs successfully deleted (IN REVERSE ORDER)\n", i);
 
     //search
-    if(DBtests_search(tree, KVs, n)){
+    if(DBtests_search(t, tree, KVs, n)){
         printf("Keys: \n");
         for(i = 0; i < n; i++){
             printf("%s ", KVs[i]->key);
@@ -218,4 +216,3 @@ void DBtests_revorder(BPtree *tree, int n){
     free(KVs);
     printf("\n");
 }
-*/

@@ -25,6 +25,9 @@ clean:
 	rm -rf ${BIN_DIR} 
 	rm -rf ./databases
 
+cleandb:
+	rm -rf ./databases
+
 run: ${EXEC}
 	$^ 
 	hexdump -C ./databases/test_db/test_db.dat

@@ -25,7 +25,6 @@ void BPtree_free(BPtree *ptr);
 
 void BPtree_insert(PageTable *t, BPtree *tree, KVpair *kv);
 BPtreeNode *BPtree_search(PageTable *t, BPtree *tree, KVpair *kv, int *idx);
-void BPtree_delete(BPtree *tree, KVpair *kv);
 
 int NextChildIDX(BPtreeNode *node, KVpair *kv);
 

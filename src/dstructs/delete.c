@@ -420,6 +420,7 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
 
             BPtreeNode_free(node);
             BPtreeNode_free(p);
+            pager_free(t, node_pid);
             return rv;
         }
 

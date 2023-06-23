@@ -43,7 +43,7 @@ int main(void){
     //BPtree_print(tree);
 
     //DBtests_all(tree, 10);
-    DB_create("test_db", 6);
+    DB_create("test_db");
     Database *db = DB_load("test_db");
     if(!db){
         printf("database not found\n");
@@ -51,65 +51,12 @@ int main(void){
     }
     printf("Database loaded\n");
 
-    KVpair *kv1 = KVpair_create(1, 9, "1", "test-key1");
-    KVpair *kv2 = KVpair_create(1, 9, "2", "test-key2");
-    KVpair *kv3 = KVpair_create(1, 9, "3", "test-key3");
-    KVpair *kv4 = KVpair_create(1, 9, "4", "test-key4");
-    KVpair *kv5 = KVpair_create(1, 9, "5", "test-key5");
-    KVpair *kv6 = KVpair_create(1, 9, "6", "test-key6");
-    KVpair *kv7 = KVpair_create(1, 9, "7", "test-key7");
-    KVpair *kv8 = KVpair_create(1, 9, "8", "test-key8");
-    KVpair *kv9 = KVpair_create(1, 9, "9", "test-key9");
-    KVpair *kvA = KVpair_create(2, 10, "10", "test-key10");
-    KVpair *kvB = KVpair_create(2, 10, "11", "test-key11");
-    KVpair *kvC = KVpair_create(2, 10, "12", "test-key12");
+    //tree struct is kinda useless, degree wont be a thing once
+    //node pages are used instead and Mroot id is always 1. create
+    //a MROOT_PAGE_ID 1
+    BPtree *tree = BPtree_create(db->table, 4);
 
-    BPtree *tree = BPtree_create(db->table, 6);
-    BPtree_insert(db->table, tree, kv1);
-    BPtree_insert(db->table, tree, kv2);
-    BPtree_insert(db->table, tree, kv4);
-    BPtree_insert(db->table, tree, kv5);
-    BPtree_insert(db->table, tree, kv3);
-    BPtree_insert(db->table, tree, kv6);
-    BPtree_insert(db->table, tree, kv7);
-    BPtree_insert(db->table, tree, kv8);
-    BPtree_insert(db->table, tree, kv9);
-    BPtree_insert(db->table, tree, kvA);
-
-    /*
-    BPT_delete(db->table, tree, kv1);
-    BPT_delete(db->table, tree, kv9);
-    BPT_delete(db->table, tree, kv2);
-    BPT_delete(db->table, tree, kv5);
-    BPT_delete(db->table, tree, kv4);
-    BPT_delete(db->table, tree, kv3);
-    BPT_delete(db->table, tree, kv6);
-    BPT_delete(db->table, tree, kv7);
-    BPT_delete(db->table, tree, kv8);
-    BPT_delete(db->table, tree, kvA);
-    */
-
-
-    /*
-    BPtree_insert(db->table, tree, kvC);
-    BPtree_insert(db->table, tree, kvB);
-    BPtree_insert(db->table, tree, kvA);
-    BPtree_insert(db->table, tree, kv9);
-    BPtree_insert(db->table, tree, kv8);
-    BPtree_insert(db->table, tree, kv7);
-    BPtree_insert(db->table, tree, kv6);
-    BPtree_insert(db->table, tree, kv5);
-    BPtree_insert(db->table, tree, kv4);
-    BPtree_insert(db->table, tree, kv3);
-    BPtree_insert(db->table, tree, kv2);
-    BPtree_insert(db->table, tree, kv1);
-    */
-
-    if(BPtree_search(db->table, tree, kv6, NULL)){
-        printf("kv found\n");
-    }else{
-        printf("kv NOT found\n");
-    }
+    DBtests_all(db->table, tree, 6);
 
     //uint8_t data1[7] = {1,2,3,4,5,6,7};
     //DB_Insert(db, "testkey1", data1, 7);
@@ -137,7 +84,7 @@ int main(void){
 }
 
 //create database directory and struct
-void DB_create(char *name, int node_len){
+void DB_create(char *name){
     struct stat st = {0};
 
     //create base directory

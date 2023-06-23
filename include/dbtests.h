@@ -1,13 +1,18 @@
 #ifndef DBTESTS_H
 #define DBTESTS_H
 #include "bptree.h"
+#include "delete.h"
 
-void DBtests_all(BPtree *tree, int n);
+void DBtests_all(PageTable *t,BPtree *tree, int n);
 
-void DBtests_inorder(BPtree *tree, int n);
+void DBtests_custom(PageTable *t, BPtree *tree);
 
-void DBtests_revorder(BPtree *tree, int n);
+void DBtests_inorder(PageTable *t, BPtree *tree, int n);
 
-void DBtests_randorder(BPtree *tree, int n);
+void DBtests_revorder(PageTable *t, BPtree *tree, int n);
+
+void DBtests_randorder(PageTable *t, BPtree *tree, int n);
+
+int DBtests_search(PageTable *t, BPtree *tree, KVpair **KVs, int n);
 
 #endif
