@@ -38,7 +38,7 @@ typedef struct BPtreeNode{
 
 void BPtreeNode_print(BPtreeNode *node);
 
-BPtreeNode *BPtreeNode_create(uint8_t n);
+BPtreeNode *BPtreeNode_create(uint8_t nkeys, int type);
 void BPtreeNode_free(BPtreeNode *node);
 
 int BPtreeNode_search(BPtreeNode* node, KVpair *kv);

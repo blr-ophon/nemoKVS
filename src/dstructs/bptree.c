@@ -24,8 +24,7 @@ BPtree *BPtree_create(PageTable *t, uint8_t degree){
     rv->degree = degree;
 
     //master root
-    BPtreeNode *Mroot = BPtreeNode_create(0);
-    Mroot->type = NT_ROOT;
+    BPtreeNode *Mroot = BPtreeNode_create(0, NT_ROOT);
     Mroot->nkeys = 0;
     Mroot->childLinks[0] = 0;       //tree root
     nodeOverwrite(t, 1, Mroot);
@@ -124,8 +123,7 @@ void BPtree_insert(PageTable *t, BPtree *tree, KVpair *kv){
 
     if(!root_id){
         //if master root points to no root, create one
-        BPtreeNode *root = BPtreeNode_create(1);
-        root->type = NT_EXT;
+        BPtreeNode *root = BPtreeNode_create(1, NT_EXT);
         BPtreeNode_appendKV(root, 0,  kv);
         root_id = nodeWrite(t, root);
         linkUpdate(t, tree->Mroot_id, 0, root_id);

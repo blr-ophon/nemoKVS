@@ -42,12 +42,10 @@ void DBtests_custom(PageTable *t, BPtree *tree){
     DBtests_search(t, tree, KVs, n);
 
     //delete
-    /*
     for(i = 0; i < n; i++){
         BPT_delete(t, tree, KVs[i]);
     }
     printf("%d key-value pairs successfully deleted (IN ORDER)\n", i);
-    */
 
     //try search
     if(DBtests_search(t, tree, KVs, n)){

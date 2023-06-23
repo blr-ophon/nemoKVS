@@ -28,8 +28,7 @@ BPtreeNode *BPtreeNode_prepend(BPtreeNode *node, KVpair *kv){
     }
 
     //append first key
-    BPtreeNode *prepended = BPtreeNode_create(node->nkeys+1);
-    prepended->type = node->type;
+    BPtreeNode *prepended = BPtreeNode_create(node->nkeys+1, node->type);
     BPtreeNode_appendKV(prepended, 0, kv);
 
     //append other keys
@@ -175,8 +174,7 @@ BPtreeNode *BPTNode_merge(PageTable *t, BPtreeNode *node, int kv_idx){
     bool internal = inferior->type == NT_INT;
 
     //create node from node1, first kv of parent and node2  
-    BPtreeNode *merged = BPtreeNode_create(inferior->nkeys + internal + superior->nkeys);
-    merged->type = inferior->type;
+    BPtreeNode *merged = BPtreeNode_create(inferior->nkeys + internal + superior->nkeys, inferior->type);
     int merged_idx = 0; //used to insert kvs and children in 'merged' node
     //inferior
     for(int i = 0; i < inferior->nkeys; i++, merged_idx++){
@@ -236,7 +234,7 @@ BPtreeNode *BPTNode_swapKey(BPtreeNode *node, int kv_idx, KVpair *newKV){
     }
     KVpair_removeVal(newKV);
 
-    BPtreeNode *newNode = BPtreeNode_create(node->nkeys);
+    BPtreeNode *newNode = BPtreeNode_create(node->nkeys, node->type);
     int i = 0;
     for(; i < node->nkeys; i++){
         if(i == kv_idx){

@@ -58,7 +58,7 @@ void BPtreeNode_print(BPtreeNode *node){
 
 //TODO; return int64 page address
 //create a node with size n
-BPtreeNode *BPtreeNode_create(uint8_t nkeys){
+BPtreeNode *BPtreeNode_create(uint8_t nkeys, int type){
     //--- as is
     BPtreeNode *rv = (BPtreeNode*) calloc(1, sizeof(BPtreeNode));
     if(nkeys){
@@ -70,6 +70,7 @@ BPtreeNode *BPtreeNode_create(uint8_t nkeys){
         rv->childLinks = calloc(1, sizeof(uint64_t));
     }
     rv->nkeys = nkeys;
+    rv->type = type;
     return rv;
 }
 
@@ -100,12 +101,11 @@ int BPtreeNode_search(BPtreeNode* node, KVpair *kv){
 BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     //-- PAGE READ
     if(!node){
-        node = BPtreeNode_create(0);
+        node = BPtreeNode_create(0, node->type);
     }
 
     //create a copy of the node with inserted value
-    BPtreeNode *newNode = BPtreeNode_create(node->nkeys + 1);
-    newNode->type = node->type;
+    BPtreeNode *newNode = BPtreeNode_create(node->nkeys + 1, node->type);
 
     if(node->nkeys == 0){
         //This causes problems with borrow in trees of degree 4.
@@ -174,8 +174,7 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
     }
 
     int nkeys = node->nkeys;
-    BPtreeNode *newNode = BPtreeNode_create(nkeys -1);
-    newNode->type = node->type;
+    BPtreeNode *newNode = BPtreeNode_create(nkeys -1, node->type);
 
     KVpair **nodeKVs = calloc(nkeys, sizeof(KVpair*));
     for(int i = 0; i < nkeys; i++){
@@ -218,8 +217,7 @@ BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
 
     //create a smaller copy of the node 
     int nkeys = node->nkeys;
-    BPtreeNode *newNode = BPtreeNode_create(nkeys -1);
-    newNode->type = node->type;
+    BPtreeNode *newNode = BPtreeNode_create(nkeys -1, node->type);
 
     int delKVpos = -1;   
     KVpair **nodeKVs = calloc(nkeys, sizeof(KVpair*));
@@ -271,8 +269,7 @@ BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node){
     bool odd = (node->nkeys % 2 != 0);
 
     //first half
-    BPtreeNode *Lnode = BPtreeNode_create(node->nkeys/2);
-    Lnode->type = node->type;
+    BPtreeNode *Lnode = BPtreeNode_create(node->nkeys/2, node->type);
     for(i = 0; i < (node->nkeys)/2; i++){
         //insert data from old to new node
         KVpair *tmpKV = BPtreeNode_getKV(node, i);
@@ -283,16 +280,14 @@ BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node){
     Lnode->childLinks[i] = node->childLinks[i];
 
     //create parent node 
-    BPtreeNode *p = BPtreeNode_create(1);
-    p->type = NT_INT;
+    BPtreeNode *p = BPtreeNode_create(1, NT_INT);
     KVpair *p_kv = BPtreeNode_getKV(node, (node->nkeys)/2);
     KVpair_removeVal(p_kv);
     BPtreeNode_appendKV(p, 0, p_kv);
     KVpair_free(p_kv);
 
     //second half
-    BPtreeNode *Rnode = BPtreeNode_create(node->nkeys/2 + odd - internal);
-    Rnode->type = node->type;
+    BPtreeNode *Rnode = BPtreeNode_create(node->nkeys/2 + odd - internal, node->type);
     i+= internal;   
     int RNode_idx = 0;
     for(; i < node->nkeys; i++){
@@ -350,8 +345,7 @@ BPtreeNode *BPtreeNode_shinMergeSplitted(BPtreeNode *node, BPtreeNode *splitted,
     }
     KVpair *newKV = BPtreeNode_getKV(splitted, 0);
 
-    BPtreeNode *merged = BPtreeNode_create(node->nkeys+1);
-    merged->type = NT_INT;
+    BPtreeNode *merged = BPtreeNode_create(node->nkeys+1, NT_INT);
 
     //append keys
     int node_idx = 0;       //iterator for node
@@ -471,7 +465,7 @@ BPtreeNode *BPtreeNode_decode(uint8_t *bytestream){
     uint16_t nkeys;
     memcpy(&nkeys, &bytestream[2], 2);
     
-    BPtreeNode *node = BPtreeNode_create(nkeys);
+    BPtreeNode *node = BPtreeNode_create(nkeys, 0);
     node->nkeys = nkeys;
 
     memcpy(&node->type, &bytestream[0], 2);
