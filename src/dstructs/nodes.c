@@ -101,9 +101,10 @@ int BPtreeNode_search(BPtreeNode* node, KVpair *kv){
 }
 
 /*
- *Insert a KV pair in the node based on KVpair_compare
+ * Insert a KV pair in the node based on KVpair_compare
+ * Returns node and the position of the key in Kidx
  */
-BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
+BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *ret_Kidx){
     if(!node){
         node = BPtreeNode_create(0, node->type);
     }
@@ -129,10 +130,10 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
             newKVpos = i+1;
         }
     }
-    if(idx) *idx = newKVpos;
+    if(ret_Kidx) *ret_Kidx = newKVpos;
 
     newNode->childLinks[0] = node->childLinks[0];
-    int kv_idx = 0; //increased every time a kv pair from node is appended
+    int Kidx_it = 0; //increased every time a kv pair from node is appended
     for(int i = 0; i < newNode->nkeys; i++){
         if(i == newKVpos){ //append kv
             BPtreeNode_appendKV(newNode, i, kv);
@@ -144,9 +145,9 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
             continue;
         }
         //append old kvs
-        BPtreeNode_appendKV(newNode, i, nodeKVs[kv_idx]);
-        newNode->childLinks[i+1] = node->childLinks[kv_idx+1];
-        kv_idx++;
+        BPtreeNode_appendKV(newNode, i, nodeKVs[Kidx_it]);
+        newNode->childLinks[i+1] = node->childLinks[Kidx_it+1];
+        Kidx_it++;
     }
 
     for(int i = 0; i < node->nkeys; i++){
@@ -155,22 +156,21 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     free(nodeKVs);
 
     BPtreeNode_free(node);
-    //-- PAGE WRITE 
     return newNode;
 }
 
 /*
  *  Delete kv from an internal node based on the position of a null child
- *  provided in del_child_idx. Used when a node's child becomes empty.
+ *  provided in del_Cidx. Used when a node's child becomes empty.
  *  Frees old node and returns shrinked node.
  */
-BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
+BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_Cidx){
     //indexes of node and child marked for deletion
-    int del_kv_idx;
-    if(del_child_idx == 0){
-        del_kv_idx = 0;
+    int del_Kidx;
+    if(del_Cidx == 0){
+        del_Kidx = 0;
     }else{
-        del_kv_idx = del_child_idx -1;
+        del_Kidx = del_Cidx -1;
     }
 
     int nkeys = node->nkeys;
@@ -185,7 +185,7 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
     int nn_i = 0;       //index for insertion in new node
     for(; i < node->nkeys; i++ ){
         //append or skip kv
-        if(i != del_kv_idx){
+        if(i != del_Kidx){
             BPtreeNode_appendKV(newNode, nn_i, nodeKVs[i]);
             nn_i++;
         }
@@ -194,7 +194,7 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
     i = 0; nn_i = 0;
     for(; i < node->nkeys+1; i++ ){
         //append or skip child 
-        if(i != del_child_idx){
+        if(i != del_Cidx){
             newNode->childLinks[nn_i] = node->childLinks[i];
             nn_i++;
         }
@@ -210,9 +210,10 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
 
 /*
  * Deletes a KV of an external node ignoring children. Use shrink for internal.
- * Frees node and return new node with deleted kv
+ * Frees node and return new node with deleted kv. Kidx is filled with the index
+ * of the deleted kv
  */
-BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
+BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *ret_Kidx){
     if(!node) return NULL;
     if(node->nkeys == 0) return NULL;
 
@@ -220,28 +221,29 @@ BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
     int nkeys = node->nkeys;
     BPtreeNode *newNode = BPtreeNode_create(nkeys -1, node->type);
 
-    int delKVpos = -1;   
+    //Find index of the kv to be deleted
+    int del_Kidx = -1;   
     KVpair **nodeKVs = calloc(nkeys, sizeof(KVpair*));
     for(int i = 0; i < nkeys; i++){
         nodeKVs[i] = BPtreeNode_getKV(node, i);
         if(KVpair_compare(kv, nodeKVs[i]) == 0){
-            delKVpos = i;
+            del_Kidx = i;
         }
     }
-    if(idx) *idx = delKVpos;
+    if(ret_Kidx) *ret_Kidx = del_Kidx;
 
-    if(delKVpos != -1){ 
+    if(del_Kidx != -1){ 
         //append all old kvs to new node except the deleted one
-        int kv_idx = 0;
+        int Kidx_it = 0;    //iterator
         int i = 0;
-        if(delKVpos == 0) i = 1;
+        if(del_Kidx == 0) i = 1;
 
         for(; i < node->nkeys; i++){
-            if(i == delKVpos){
+            if(i == del_Kidx){
                 continue;
             }
-            BPtreeNode_appendKV(newNode, kv_idx, nodeKVs[i]);
-            kv_idx++;
+            BPtreeNode_appendKV(newNode, Kidx_it, nodeKVs[i]);
+            Kidx_it++;
         }
         BPtreeNode_free(node);
     }else{
@@ -289,22 +291,22 @@ BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node){
     //second half
     BPtreeNode *Rnode = BPtreeNode_create(node->nkeys/2 + odd - internal, node->type);
     i+= internal;   
-    int RNode_idx = 0;
+    int RNode_it = 0;
     for(; i < node->nkeys; i++){
         //insert data from old to new node
         KVpair *tmpKV = BPtreeNode_getKV(node, i);
-        BPtreeNode_appendKV(Rnode, RNode_idx, tmpKV);
+        BPtreeNode_appendKV(Rnode, RNode_it, tmpKV);
         KVpair_free(tmpKV);
-        Rnode->childLinks[RNode_idx] = node->childLinks[i];
-        RNode_idx++;
+        Rnode->childLinks[RNode_it] = node->childLinks[i];
+        RNode_it++;
     }
-    Rnode->childLinks[RNode_idx] = node->childLinks[i];
+    Rnode->childLinks[RNode_it] = node->childLinks[i];
 
     //link parent node to 2 children
-    int lnode_idx = nodeWrite(t, Lnode);
-    int rnode_idx = nodeWrite(t, Rnode);
-    p->childLinks[0] = lnode_idx;
-    p->childLinks[1] = rnode_idx;
+    int lnode_Pidx = nodeWrite(t, Lnode);
+    int rnode_Pidx = nodeWrite(t, Rnode);
+    p->childLinks[0] = lnode_Pidx;
+    p->childLinks[1] = rnode_Pidx;
     BPtreeNode_free(Lnode);
     BPtreeNode_free(Rnode);
     
@@ -323,7 +325,7 @@ BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node){
  *
  * TODO: can substitute prepend and insert in delete.c to reduce code
  */
-BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int ptospl_idx){
+BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int ptospl_Cidx){
     KVpair **KVs = malloc(node->nkeys * sizeof(void*));
     for(int i = 0; i < node->nkeys; i++){
         KVs[i] = BPtreeNode_getKV(node, i);
@@ -333,26 +335,26 @@ BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int
     BPtreeNode *merged = BPtreeNode_create(node->nkeys+1, NT_INT);
 
     //append keys
-    int node_idx = 0;       //iterator for node
+    int node_it = 0;       //iterator for node
     for(int i = 0; i < merged->nkeys; i++){
-        if(i == ptospl_idx){    //In this operation, the idx from node of the splitted child
+        if(i == ptospl_Cidx){    //In this operation, the idx from node of the splitted child
                                 //is equal to the kv idx where it will be inserted
             BPtreeNode_appendKV(merged, i, newKV);
         }else{
-            BPtreeNode_appendKV(merged, i, KVs[node_idx++]);
+            BPtreeNode_appendKV(merged, i, KVs[node_it++]);
         }
     }
 
     //append children 
-    node_idx = 0;
+    node_it = 0;
     for(int i = 0; i < merged->nkeys +1; i++){
-        if(i == ptospl_idx){
+        if(i == ptospl_Cidx){
             i++;
         }
-        merged->childLinks[i] = node->childLinks[node_idx++];
+        merged->childLinks[i] = node->childLinks[node_it++];
     }
-    merged->childLinks[ptospl_idx] = splitted->childLinks[0];
-    merged->childLinks[ptospl_idx+1] = splitted->childLinks[1];
+    merged->childLinks[ptospl_Cidx] = splitted->childLinks[0];
+    merged->childLinks[ptospl_Cidx+1] = splitted->childLinks[1];
     
     //free memory and return
     for(int i = 0; i < node->nkeys; i++){
@@ -365,26 +367,26 @@ BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int
 }
 
 
-KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){
-    if(idx + 1 > node->nkeys){ 
+KVpair *BPtreeNode_getKV(BPtreeNode *node, int Kidx){
+    if(Kidx + 1 > node->nkeys){ 
         return NULL;
     }
     assert(node->keyOffsets);
-    return KVpair_decode(&node->key_values[node->keyOffsets[idx]]);
+    return KVpair_decode(&node->key_values[node->keyOffsets[Kidx]]);
 }
 
 /*
  * Appends a kv to a node, ignoring comparisons and childLinks
  */
-void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
+void BPtreeNode_appendKV(BPtreeNode *node, int Kidx, KVpair *kv){
     //assert(node->type == NT_EXT);
     //expects keyoffsets[idx] to be previously filled by previous node
     //- keyOffsets[0] is set to 0 in node creation
-    if(idx >= node->nkeys){
+    if(Kidx >= node->nkeys){
         //TODO: set errno
         return;
     }
-    uint16_t offset = node->keyOffsets[idx]; 
+    uint16_t offset = node->keyOffsets[Kidx]; 
     size_t kv_size = KVpair_getSize(kv);
 
     node->dataSize += kv_size;
@@ -394,8 +396,8 @@ void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
     memcpy(&node->key_values[offset], bytestream, kv_size);
 
     //appends offset for the next key
-    if(idx + 1 <= node->nkeys){
-        node->keyOffsets[idx+1] = node->keyOffsets[idx] + kv_size;
+    if(Kidx + 1 <= node->nkeys){
+        node->keyOffsets[Kidx+1] = node->keyOffsets[Kidx] + kv_size;
     }
 
     free(bytestream);
@@ -512,9 +514,9 @@ int nodeWrite(PageTable *table, BPtreeNode *node){
 /*
  * Reads page and returns a node struct
  */
-BPtreeNode *nodeRead(PageTable *table, int page_n){
+BPtreeNode *nodeRead(PageTable *table, uint64_t Pidx){
     //receives a page address, decodes page to a BPtreeNode
-    uint8_t *bytestream = table->entries[page_n];
+    uint8_t *bytestream = table->entries[Pidx];
     BPtreeNode *node = BPtreeNode_decode(bytestream);
     return node;
 }
@@ -523,20 +525,20 @@ BPtreeNode *nodeRead(PageTable *table, int page_n){
  * Writes a node over a specified page. 
  * Used in link updates
  */
-void nodeOverwrite(PageTable *table, uint64_t page_n, BPtreeNode *node){
+void nodeOverwrite(PageTable *table, uint64_t Pidx, BPtreeNode *node){
     //encodes node
     uint8_t *bytestream = BPtreeNode_encode(node);
 
     //write to said page
     int size = BPtreeNode_getSize(node);
-    uint8_t *page = table->entries[page_n];
+    uint8_t *page = table->entries[Pidx];
     memcpy(page, bytestream, size);
 
     free(bytestream);
 }
 
-void node_free(PageTable *t, uint64_t node_pid){
-    pager_free(t, node_pid);    
+void node_free(PageTable *t, uint64_t node_Pidx){
+    pager_free(t, node_Pidx);    
 }
 
 /*
@@ -544,9 +546,9 @@ void node_free(PageTable *t, uint64_t node_pid){
  * node_pid is the node to be updated. Child_id is the childLink to be updated
  * and newLink is the new value of the child.
  */
-void linkUpdate(PageTable *t, uint64_t node_pid, int child_id, uint64_t newLink){
-    BPtreeNode *node = nodeRead(t, node_pid);
-    node->childLinks[child_id] = newLink;
-    nodeOverwrite(t, node_pid, node);
+void linkUpdate(PageTable *t, uint64_t Pidx, int Cidx, uint64_t newLink){
+    BPtreeNode *node = nodeRead(t, Pidx);
+    node->childLinks[Cidx] = newLink;
+    nodeOverwrite(t, Pidx, node);
     BPtreeNode_free(node);
 }

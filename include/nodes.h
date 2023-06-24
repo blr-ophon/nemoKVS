@@ -42,18 +42,18 @@ void BPtreeNode_free(BPtreeNode *node);
 
 //auxiliary
 void BPtreeNode_print(BPtreeNode *node);
-KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx);
-void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv);
+KVpair *BPtreeNode_getKV(BPtreeNode *node, int Kidx);
+void BPtreeNode_appendKV(BPtreeNode *node, int Kidx, KVpair *kv);
 int BPtreeNode_search(BPtreeNode* node, KVpair *kv);
 
 //operations (insert)
-BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx);
-BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node);                   //ONLY FUNCTION THAT WRITES
-BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int ptospl_idx);
+BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *ret_Kidx);
+BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node);                   
+BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int ptospl_Cidx);
 
 //operations (delete)
-BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int child_idx);
-BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx);
+BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_Cidx);
+BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *ret_Kidx);
 
 
 
@@ -63,9 +63,9 @@ uint8_t *BPtreeNode_encode(BPtreeNode *node);
 BPtreeNode *BPtreeNode_decode(uint8_t *bytestream);
 
 int nodeWrite(PageTable *table, BPtreeNode *node);
-BPtreeNode *nodeRead(PageTable *table, int page_n);
-void nodeOverwrite(PageTable *table, uint64_t page_n, BPtreeNode *node);
-void linkUpdate(PageTable *t, uint64_t node_pid, int child_id, uint64_t newLink);
-void node_free(PageTable *t, uint64_t node_pid);
+BPtreeNode *nodeRead(PageTable *table, uint64_t Pidx);
+void nodeOverwrite(PageTable *table, uint64_t Pidx, BPtreeNode *node);
+void node_free(PageTable *t, uint64_t node_Pidx);
+void linkUpdate(PageTable *t, uint64_t Pidx, int Cidx, uint64_t newLink);
 
 #endif
