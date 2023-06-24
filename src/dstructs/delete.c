@@ -1,8 +1,5 @@
 #include "delete.h"
 
-//TODO test what happens when using degree 4 and internal node becomes empty
-
-//(C)**TODO: Change completely...
 //used to update the parent node when a borrow occurs
 KVpair *BPtree_getLeftmostKV(PageTable *t, int subTreeRoot_id){
     //traverse until reach an external node
@@ -17,7 +14,6 @@ KVpair *BPtree_getLeftmostKV(PageTable *t, int subTreeRoot_id){
 }
 
 
-//***unchanged (full in-mem). Send to nodes.c
 //Inserts kv at 0 position (prepend) independent of whetever are the keys
 //in the node. Only use is when a borrow from left to right occurs,
 //when the borrowed kv is equal to the first kv of destination node.
@@ -51,7 +47,6 @@ BPtreeNode *BPtreeNode_prepend(BPtreeNode *node, KVpair *kv){
     return prepended;
 }
 
-//(C)***free 3 nodes -> write 3 nodes
 //pass extreme kv of src to extreme of dst. 
 //TODO: split this into borrowRight and borrowLeft
 BPtreeNode *BPTNode_borrow(PageTable *t, BPtreeNode *p, int pKV_idx, bool fromRight){
@@ -309,6 +304,8 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
         rv = shinBPT_deleteR(tree, t, next_pid, node_pid, kv);
         if(rv.leftmostKV){
             //update node and p
+            BPtreeNode_free(node);
+            BPtreeNode_free(p);
             node = nodeRead(t, node_pid);
             p = nodeRead(t, p_pid);
             /*
@@ -332,6 +329,8 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
 
     if(rv.smallNode){
         //update node and p
+        BPtreeNode_free(node);
+        BPtreeNode_free(p);
         node = nodeRead(t, node_pid);
         p = nodeRead(t, p_pid);
         /*

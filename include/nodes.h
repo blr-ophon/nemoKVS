@@ -30,7 +30,7 @@ typedef struct BPtreeNode{
     uint16_t type;                   //internal or external
     uint16_t nkeys;                  //number of keys
     uint64_t dataSize;               //size of key_values in bytes
-    //struct BPtreeNode **children;  //Array of pointers to children
+                                     
     uint64_t *childLinks;            //Array of page indexes
     uint16_t *keyOffsets;            //Array of offsets to key values
     uint8_t *key_values;             //array of bytes with key values
@@ -46,8 +46,7 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx);
 BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx);
 
 BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node);                   //ONLY FUNCTION THAT WRITES
-//BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted);
-BPtreeNode *BPtreeNode_shinMergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int ptospl_idx);
+BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int ptospl_idx);
 BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int child_idx);
 
 KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx);

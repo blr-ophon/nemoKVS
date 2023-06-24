@@ -4,6 +4,7 @@
 
 
 void DBtests_all(PageTable *t,BPtree *tree, int n){
+    srand(time(NULL));
     /*
     DBtests_custom(t, tree);
     */
@@ -94,7 +95,6 @@ int DBtests_search(PageTable *t, BPtree *tree, KVpair **KVs, int n){
 int DBtests_randorder(PageTable *t, BPtree *tree, int n){
     KVpair **KVs = malloc(n*sizeof(void*));
     int i;
-    srand(time(NULL));
 
     //create
     for(i = 0; i < n; i++){

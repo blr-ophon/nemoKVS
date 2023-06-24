@@ -317,20 +317,7 @@ BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node){
 //To be used with split. Merges 'splited' node with it's parent
 //expects splitted to be of size 1, coming from a split
 //expects splitted and node to be internal nodes
-BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted){
-    //TODO: read all tmpKVs to an array
-    //insert splitted to node
-    KVpair *splittedKV = BPtreeNode_getKV(splitted, 0);
-    int idx = 0;
-    BPtreeNode *merged = BPtreeNode_insert(node, splittedKV, &idx);
-
-    merged->childLinks[idx] = splitted->childLinks[0];        //left child
-    merged->childLinks[idx+1] = splitted->childLinks[1];      //right child
-    
-    BPtreeNode_free(splitted);
-    return merged;
-}
-
+//
 //To be used with split. Merges 'splited' node with it's parent
 //expects splitted to be of size 1, coming from a split
 //expects splitted and node to be internal nodes
@@ -338,7 +325,7 @@ BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted){
 //internal nodes, reduce its code.
 //idx is necessary because the internal node may have repeated keys, to which the
 //splitted may be inserted before in the sequence
-BPtreeNode *BPtreeNode_shinMergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int ptospl_idx){
+BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int ptospl_idx){
     KVpair **KVs = malloc(node->nkeys * sizeof(void*));
     for(int i = 0; i < node->nkeys; i++){
         KVs[i] = BPtreeNode_getKV(node, i);
