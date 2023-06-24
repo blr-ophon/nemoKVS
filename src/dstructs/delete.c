@@ -210,7 +210,7 @@ BPtreeNode *BPTNode_merge(PageTable *t, BPtreeNode *node, int kv_idx){
                                                 
     BPtreeNode_free(inferior);
     BPtreeNode_free(superior);
-    BPtreeNode_free(node);
+    //BPtreeNode_free(node);
     return shrinked;
     //NOTE: caller must link grandparent to shrinked
 }

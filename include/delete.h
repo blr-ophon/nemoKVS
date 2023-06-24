@@ -21,7 +21,7 @@ BPtreeNode *BPTNode_borrow(PageTable *t, BPtreeNode *p, int pKV_idx, bool fromRi
 //Merges inferior(leftmost), superior(rightmost) and a parent node (if internal). Opposite of split
 BPtreeNode *BPTNode_merge(PageTable *t, BPtreeNode *node, int kv_idx);
 
-//Swap keys in internal nodes, else link changes would cascade to root. 
+//Swap keys in internal nodes and overwrites, else link changes would cascade to root. 
 BPtreeNode *BPTNode_swapKey(BPtreeNode *node, int kv_idx, KVpair *newKV);
 
 #endif

@@ -11,6 +11,10 @@ static void assert_page(BPtreeNode *node){
     //assert node fits in a page
 }
 
+
+/*
+ * Prints a node struct
+ */
 void BPtreeNode_print(BPtreeNode *node){
     //--- as is
     printf("\n==== NODE ====\n");
@@ -56,10 +60,7 @@ void BPtreeNode_print(BPtreeNode *node){
 }
 
 
-//TODO; return int64 page address
-//create a node with size n
 BPtreeNode *BPtreeNode_create(uint8_t nkeys, int type){
-    //--- as is
     BPtreeNode *rv = (BPtreeNode*) calloc(1, sizeof(BPtreeNode));
     if(nkeys){
         rv->childLinks = calloc(nkeys+1, sizeof(uint64_t));
@@ -74,6 +75,7 @@ BPtreeNode *BPtreeNode_create(uint8_t nkeys, int type){
     return rv;
 }
 
+
 void BPtreeNode_free(BPtreeNode *node){
     free(node->childLinks);
     free(node->keyOffsets);
@@ -82,9 +84,10 @@ void BPtreeNode_free(BPtreeNode *node){
 }
 
 
-
+/*
+ * Returns index of the specified KV pair in the node
+ */
 int BPtreeNode_search(BPtreeNode* node, KVpair *kv){
-    //-- PAGE READ
     for(int i = 0; i < node->nkeys; i++){
         KVpair *crntKV = BPtreeNode_getKV(node, i);
         if(KVpair_compare(kv, crntKV) == 0){
@@ -97,9 +100,10 @@ int BPtreeNode_search(BPtreeNode* node, KVpair *kv){
     return -1;
 }
 
-//TODO; return int64 page address
+/*
+ *Insert a KV pair in the node based on KVpair_compare
+ */
 BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
-    //-- PAGE READ
     if(!node){
         node = BPtreeNode_create(0, node->type);
     }
@@ -155,16 +159,12 @@ BPtreeNode *BPtreeNode_insert(BPtreeNode *node, KVpair *kv, int *idx){
     return newNode;
 }
 
-//TODO; return int64 page address
-//Delete kv from an internal node based on the position of a null child
-//provided in del_child_idx
+/*
+ *  Delete kv from an internal node based on the position of a null child
+ *  provided in del_child_idx. Used when a node's child becomes empty.
+ *  Frees old node and returns shrinked node.
+ */
 BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
-    //---- PAGE READ
-    /*
-     * I almost went insane for errors caused by this simple thing. I
-     * know it's ugly with all these loops, but it works... for now
-     */
-
     //indexes of node and child marked for deletion
     int del_kv_idx;
     if(del_child_idx == 0){
@@ -204,14 +204,15 @@ BPtreeNode *BPtreeNode_shrink(BPtreeNode *node, int del_child_idx){
         KVpair_free(nodeKVs[i]);
     }
     free(nodeKVs);
+    BPtreeNode_free(node);
     return newNode;
-    //---- PAGE WRITE 
 }
 
-//TODO; return int64 page address
-//Delete kv of a node. Only works for external nodes. Use shrink for internal
+/*
+ * Deletes a KV of an external node ignoring children. Use shrink for internal.
+ * Frees node and return new node with deleted kv
+ */
 BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
-    //---- PAGE READ
     if(!node) return NULL;
     if(node->nkeys == 0) return NULL;
 
@@ -255,15 +256,14 @@ BPtreeNode *BPtreeNode_delete(BPtreeNode *node, KVpair *kv, int *idx){
 
     free(nodeKVs);
     return newNode;
-    //---- PAGE WRITE 
 }
 
 
-//TODO; return int64 page address
-//splits node and returns it's pointer. returned node must be merged with parent node
-//BPtreeNode *BPtreeNode_split(BPtreeNode *node){
+/*
+ * Splits a node into 2 children and one parent. The children are written on disk and the 
+ * parent is returned to merge with previous parent using mergeSplitted function
+ */
 BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node){
-    //--- PAGE READ
     int i;
     bool internal = (node->type == NT_INT);
     bool odd = (node->nkeys % 2 != 0);
@@ -313,18 +313,16 @@ BPtreeNode *BPtreeNode_split(PageTable *t, BPtreeNode *node){
     return p;
 }
 
-//TODO; return int64 page address
-//To be used with split. Merges 'splited' node with it's parent
-//expects splitted to be of size 1, coming from a split
-//expects splitted and node to be internal nodes
-//
-//To be used with split. Merges 'splited' node with it's parent
-//expects splitted to be of size 1, coming from a split
-//expects splitted and node to be internal nodes
-//Same as insert, but inserts at an specific place. TODO: insert becomes useless for 
-//internal nodes, reduce its code.
-//idx is necessary because the internal node may have repeated keys, to which the
-//splitted may be inserted before in the sequence
+/*
+ * Merges a single kv internal node returned from BPtreeNode_split() with its parent.
+ * parent to splitted idx is necessary because the internal node may have repeated keys, to which the
+ * splitted may be inserted before in the sequence
+ *
+ * Same as insert, but inserts at an specific place. TODO: insert becomes useless for 
+ * internal nodes, reduce its code.
+ *
+ * TODO: can substitute prepend and insert in delete.c to reduce code
+ */
 BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int ptospl_idx){
     KVpair **KVs = malloc(node->nkeys * sizeof(void*));
     for(int i = 0; i < node->nkeys; i++){
@@ -375,7 +373,9 @@ KVpair *BPtreeNode_getKV(BPtreeNode *node, int idx){
     return KVpair_decode(&node->key_values[node->keyOffsets[idx]]);
 }
 
-//Overwrites key
+/*
+ * Appends a kv to a node, ignoring comparisons and childLinks
+ */
 void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
     //assert(node->type == NT_EXT);
     //expects keyoffsets[idx] to be previously filled by previous node
@@ -401,6 +401,9 @@ void BPtreeNode_appendKV(BPtreeNode *node, int idx, KVpair *kv){
     free(bytestream);
 }
 
+/*
+ * Returns size of a node in bytes
+ */
 int BPtreeNode_getSize(BPtreeNode *node){
     //header
     int size = 2*sizeof(uint16_t) + sizeof(size_t);
@@ -413,6 +416,9 @@ int BPtreeNode_getSize(BPtreeNode *node){
     return size;
 }
 
+/*
+ * Encodes node struct to bytestream.
+ */
 uint8_t *BPtreeNode_encode(BPtreeNode *node){
     int size = BPtreeNode_getSize(node);
     uint8_t *bytestream = malloc(size);
@@ -447,6 +453,9 @@ uint8_t *BPtreeNode_encode(BPtreeNode *node){
     return bytestream;
 }
 
+/*
+ * Decodes bytestream to a node struct.
+ */
 BPtreeNode *BPtreeNode_decode(uint8_t *bytestream){
     //header
     uint16_t nkeys;
@@ -481,7 +490,9 @@ BPtreeNode *BPtreeNode_decode(uint8_t *bytestream){
     return node;
 }
 
-//write to some page and return its index
+/*
+ * Writes node to some page and returns the page index
+ */
 int nodeWrite(PageTable *table, BPtreeNode *node){
     //allocate a page
     int page_n = pager_alloc(table);
@@ -498,7 +509,9 @@ int nodeWrite(PageTable *table, BPtreeNode *node){
     return page_n;
 }
 
-//reads the contents of a page as node
+/*
+ * Reads page and returns a node struct
+ */
 BPtreeNode *nodeRead(PageTable *table, int page_n){
     //receives a page address, decodes page to a BPtreeNode
     uint8_t *bytestream = table->entries[page_n];
@@ -506,6 +519,10 @@ BPtreeNode *nodeRead(PageTable *table, int page_n){
     return node;
 }
 
+/*
+ * Writes a node over a specified page. 
+ * Used in link updates
+ */
 void nodeOverwrite(PageTable *table, uint64_t page_n, BPtreeNode *node){
     //encodes node
     uint8_t *bytestream = BPtreeNode_encode(node);
@@ -522,7 +539,11 @@ void node_free(PageTable *t, uint64_t node_pid){
     pager_free(t, node_pid);    
 }
 
-//updates childLink[child_id] to newLink and overwrites node
+/*
+ * updates childLink[child_id] to newLink and overwrites node
+ * node_pid is the node to be updated. Child_id is the childLink to be updated
+ * and newLink is the new value of the child.
+ */
 void linkUpdate(PageTable *t, uint64_t node_pid, int child_id, uint64_t newLink){
     BPtreeNode *node = nodeRead(t, node_pid);
     node->childLinks[child_id] = newLink;
