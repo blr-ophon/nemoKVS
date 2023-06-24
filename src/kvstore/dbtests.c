@@ -11,7 +11,7 @@ void DBtests_all(PageTable *t,BPtree *tree, int n){
     DBtests_inorder(t, tree, n);
     DBtests_revorder(t, tree, n);
     DBtests_randorder(t, tree, n);
-    for(int i = 0; i < 100; i++){
+    for(int i = 0; i < 10000; i++){
         if(DBtests_randorder(t, tree, n) < 0){
             printf("> (%d)Found remaining keys\n", i);
             break;
@@ -26,11 +26,15 @@ void DBtests_all(PageTable *t,BPtree *tree, int n){
 //degree 6, n = 10
 //4 - 7 - 13 - 7 - 16 - 16 - 4 - 10 - 1 - 10    OK
 
+//degree 6, n = 30
+//46 - 1 - 79 - 58 - 70 - 82 - 73 - 7 - 58 - 82 - 28 - 88 - 79 - 25 - 73 - 70 - 43 - 34 - 85 - 13 - 88 - 49 - 40 - 28 - 85 - 52 - 31 - 1 - 55 - 19 -
+//{46, 1, 79, 58, 70, 82, 73, 7, 58, 82, 28, 88, 79, 25, 73, 70, 43, 34, 85, 13, 88, 49, 40, 28, 85, 52, 31, 1, 55, 19}
 //
+
 void DBtests_custom(PageTable *t, BPtree *tree){ 
-    int n = 10;
+    int n = 30;
     //char tests[10] = {1,2,3,4,5,6,7,8,9,10};
-    char tests[10] = {4,19,22,19,4,22,16,28,19,4};
+    char tests[30] = {46, 1, 79, 58, 70, 82, 73, 7, 58, 82, 28, 88, 79, 25, 73, 70, 43, 34, 85, 13, 88, 49, 40, 28, 85, 52, 31, 1, 55, 19};
 
     //Create kvs
     KVpair **KVs = malloc(n*sizeof(void*));

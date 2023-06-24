@@ -259,6 +259,7 @@ typedef struct{
 ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_t p_pid, KVpair *kv){
     BPtreeNode *node = nodeRead(t, node_pid);
     BPtreeNode *p = nodeRead(t, p_pid);
+    int ptoc_idx = NextChildIDX(node,kv);
 
     ret_flags rv;
     rv.smallNode = 0;
@@ -337,7 +338,7 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
          * Merge or split
          */
         bool operationDone = false;
-        int ptoc_idx = NextChildIDX(node,kv);
+        //int ptoc_idx = NextChildIDX(node,kv);
 
         //as parent. try giving from the left sibling to the node
         if(ptoc_idx != 0){  //left sibling does not exist / node is child 0 of p
