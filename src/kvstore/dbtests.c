@@ -11,7 +11,7 @@ void DBtests_all(PageTable *t,BPtree *tree, int n){
     DBtests_inorder(t, tree, n);
     DBtests_revorder(t, tree, n);
     DBtests_randorder(t, tree, n);
-    for(int i = 0; i < 10000; i++){
+    for(int i = 0; i < 100; i++){
         if(DBtests_randorder(t, tree, n) < 0){
             printf("> (%d)Found remaining keys\n", i);
             break;

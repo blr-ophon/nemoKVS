@@ -180,7 +180,7 @@ BPtreeNode *BPTNode_borrow(PageTable *t, BPtreeNode *p, int p_Kidx, bool fromRig
 
 /*
  * Merges the inferior and superior child of a kv in a node. Reverse of split
- * kv_idx is the kv index in parent where whose 2 children are trying to merge
+ * merge_Kidx is the kv index in parent where whose 2 children are trying to merge
  * Frees 2 nodes. Writes merged node. Return shrinked parent as struct.
  */
 
@@ -250,10 +250,11 @@ typedef struct{
     KVpair *leftmostKV;     //returned when a kv pair must be updated in one or more parents
 }ret_flags;
 
-ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_t p_pid, KVpair *kv){
-    BPtreeNode *node = nodeRead(t, node_pid);
-    BPtreeNode *p = nodeRead(t, p_pid);
-    int ptoc_idx = NextChildIDX(node,kv);
+ret_flags BPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_Pidx, uint64_t p_Pidx, KVpair *kv){
+    BPtreeNode *node = nodeRead(t, node_Pidx);
+    BPtreeNode *p = nodeRead(t, p_Pidx);
+    int NDtoNext_Cidx = NextChildIDX(node,kv);
+    //TODO: unupdated NDtoNext could be causing problems
 
     ret_flags rv;
     rv.smallNode = 0;
@@ -264,9 +265,9 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
          * Delete single KV from node
          */
         //search kv pair and remove if it exists
-        int ptonode_idx = NextChildIDX(p,kv);
-        int deletedKV_idx;
-        BPtreeNode *deleted = BPtreeNode_delete(node, kv, &deletedKV_idx); 
+        int PtoND_Cidx = NextChildIDX(p,kv);
+        int deletedKV_Kidx;
+        BPtreeNode *deleted = BPtreeNode_delete(node, kv, &deletedKV_Kidx); 
 
         if(!deleted){ //kv not found in node
             BPtreeNode_free(node);
@@ -274,15 +275,14 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
             return rv; //all false
         }
 
-        if(deletedKV_idx == 0) rv.leftmostKV = BPtreeNode_getKV(deleted, 0); 
+        if(deletedKV_Kidx == 0) rv.leftmostKV = BPtreeNode_getKV(deleted, 0); 
 
         node = deleted;
 
-        pager_free(t, node_pid);
-        node_pid = nodeWrite(t, node);
+        pager_free(t, node_Pidx);
+        node_Pidx = nodeWrite(t, node);
         //link to parent 
-        //p->childLinks[ptonode_idx] = deleted;
-        linkUpdate(t, p_pid, ptonode_idx, node_pid);
+        linkUpdate(t, p_Pidx, PtoND_Cidx, node_Pidx);
 
         if(node->nkeys < tree->degree/2 - 1){
             rv.smallNode = true;
@@ -294,26 +294,26 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
         /*
          * Traverse to next node
          */
-        int nodetonext_idx = NextChildIDX(node, kv);
-        int next_pid = node->childLinks[nodetonext_idx];
-        rv = shinBPT_deleteR(tree, t, next_pid, node_pid, kv);
+        //NDtoNext_Cidx = NextChildIDX(node,kv);
+        int next_Pidx = node->childLinks[NDtoNext_Cidx];
+        rv = BPT_deleteR(tree, t, next_Pidx, node_Pidx, kv);
         if(rv.leftmostKV){
             //update node and p
             BPtreeNode_free(node);
             BPtreeNode_free(p);
-            node = nodeRead(t, node_pid);
-            p = nodeRead(t, p_pid);
+            node = nodeRead(t, node_Pidx);
+            p = nodeRead(t, p_Pidx);
             /*
              * swap keys to new leftmost
              */
-            if(nodetonext_idx != 0){
-                BPtreeNode *swapped = BPTNode_swapKey(node, nodetonext_idx-1, rv.leftmostKV);
+            if(NDtoNext_Cidx != 0){
+                BPtreeNode *swapped = BPTNode_swapKey(node, NDtoNext_Cidx-1, rv.leftmostKV);
                 node = swapped;
 
-                pager_free(t, node_pid);
-                node_pid = nodeWrite(t, node);
+                pager_free(t, node_Pidx);
+                node_Pidx = nodeWrite(t, node);
 
-                linkUpdate(t, p_pid, NextChildIDX(p,kv), node_pid);
+                linkUpdate(t, p_Pidx, NextChildIDX(p,kv), node_Pidx);
 
                 KVpair_free(rv.leftmostKV);
                 rv.leftmostKV = NULL;           
@@ -326,31 +326,30 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
         //update node and p
         BPtreeNode_free(node);
         BPtreeNode_free(p);
-        node = nodeRead(t, node_pid);
-        p = nodeRead(t, p_pid);
+        node = nodeRead(t, node_Pidx);
+        p = nodeRead(t, p_Pidx);
         /*
          * Merge or split
          */
         bool operationDone = false;
-        //int ptoc_idx = NextChildIDX(node,kv);
 
         //as parent. try giving from the left sibling to the node
-        if(ptoc_idx != 0){  //left sibling does not exist / node is child 0 of p
-            BPtreeNode *tmp = nodeRead(t, node->childLinks[ptoc_idx-1]);
+        if(NDtoNext_Cidx != 0){  //left sibling does not exist / node is child 0 of p
+            BPtreeNode *tmp = nodeRead(t, node->childLinks[NDtoNext_Cidx-1]);
             if(tmp->nkeys -1 >= tree->degree/2 -1){
 
-                BPtreeNode *updated = BPTNode_borrow(t, node, ptoc_idx-1, 0);
+                BPtreeNode *updated = BPTNode_borrow(t, node, NDtoNext_Cidx-1, 0);
                 node = updated;
 
-                pager_free(t, node_pid);
-                int node_pid = nodeWrite(t, node);
-                linkUpdate(t, p_pid, NextChildIDX(p, kv), node_pid);
+                pager_free(t, node_Pidx);
+                int node_Pidx = nodeWrite(t, node);
+                linkUpdate(t, p_Pidx, NextChildIDX(p, kv), node_Pidx);
 
                 operationDone = true;
 
-                if(ptoc_idx == 1){  //borrow occurs in leftmost KV of node
+                if(NDtoNext_Cidx == 1){  //borrow occurs in leftmost KV of node
                     //1 because for borrow left in kv 0, child 1 asks for a kv in child 0
-                    rv.leftmostKV = BPtree_getLeftmostKV(t, node_pid);
+                    rv.leftmostKV = BPtree_getLeftmostKV(t, node_Pidx);
                 }
             }
             BPtreeNode_free(tmp);
@@ -358,53 +357,53 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
 
 
         //if left sibling too smal or inexistent, try the right sibling
-        if(ptoc_idx != node->nkeys && !operationDone){
-            BPtreeNode *tmp = nodeRead(t, node->childLinks[ptoc_idx+1]);
+        if(NDtoNext_Cidx != node->nkeys && !operationDone){
+            BPtreeNode *tmp = nodeRead(t, node->childLinks[NDtoNext_Cidx+1]);
             if(tmp->nkeys -1 >= tree->degree/2 -1){
 
-                BPtreeNode *updated = BPTNode_borrow(t, node, ptoc_idx, 1);
+                BPtreeNode *updated = BPTNode_borrow(t, node, NDtoNext_Cidx, 1);
 
                 node = updated;
 
-                pager_free(t, node_pid);
-                int node_pid = nodeWrite(t, node);
-                linkUpdate(t, p_pid, NextChildIDX(p, kv), node_pid);
+                pager_free(t, node_Pidx);
+                int node_Pidx = nodeWrite(t, node);
+                linkUpdate(t, p_Pidx, NextChildIDX(p, kv), node_Pidx);
 
                 operationDone = true;
 
-                if(ptoc_idx == 0){  //borrow occurs in leftmost KV of node 
+                if(NDtoNext_Cidx == 0){  //borrow occurs in leftmost KV of node 
                     //0 because for borrow right in kv 0, child 0 asks for a kv in child 1
                     //rv.leftmostKV = BPtreeNode_getKV(updated, 0);
-                    rv.leftmostKV = BPtree_getLeftmostKV(t, node_pid);
+                    rv.leftmostKV = BPtree_getLeftmostKV(t, node_Pidx);
                 }
             }
             BPtreeNode_free(tmp);
         }
 
         //if right sibling too small or inexistent, merge with left sibling
-        if(ptoc_idx != 0 && !operationDone){
+        if(NDtoNext_Cidx != 0 && !operationDone){
             //TODO merge frees 2 nodes returns in-mem merged node
             //BPtreeNode *merged = BPTNode_merge(node->children[ptoc_idx-1], 
             //        node->children[ptoc_idx], node, ptoc_idx -1);
-            BPtreeNode *merged = BPTNode_merge(t, node, ptoc_idx-1);
+            BPtreeNode *merged = BPTNode_merge(t, node, NDtoNext_Cidx-1);
             node = merged;
 
-            pager_free(t, node_pid);
-            int node_pid = nodeWrite(t, node);
-            linkUpdate(t, p_pid, NextChildIDX(p, kv), node_pid);
+            pager_free(t, node_Pidx);
+            int node_Pidx = nodeWrite(t, node);
+            linkUpdate(t, p_Pidx, NextChildIDX(p, kv), node_Pidx);
 
             operationDone = true;
         }
 
         //if left sibling inexistent, merge with right sibling
-        if(ptoc_idx != node->nkeys && !operationDone){
+        if(NDtoNext_Cidx != node->nkeys && !operationDone){
             //TODO merge frees 2 nodes returns in-mem merged node
-            BPtreeNode *merged = BPTNode_merge(t, node, ptoc_idx);
+            BPtreeNode *merged = BPTNode_merge(t, node, NDtoNext_Cidx);
             node = merged;
 
-            pager_free(t, node_pid);
-            int node_pid = nodeWrite(t, node);
-            linkUpdate(t, p_pid, NextChildIDX(p, kv), node_pid);
+            pager_free(t, node_Pidx);
+            int node_Pidx = nodeWrite(t, node);
+            linkUpdate(t, p_Pidx, NextChildIDX(p, kv), node_Pidx);
 
             operationDone = true;
         }
@@ -413,15 +412,15 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
         if(!operationDone){
             //link grandparent to grandchild skipping the empty root
             //TODO: overwrite root page, linking to different root
-            BPtreeNode *root = nodeRead(t, node_pid);
+            BPtreeNode *root = nodeRead(t, node_Pidx);
             int newRoot = root->childLinks[0];
             BPtreeNode_free(root);
-            linkUpdate(t, p_pid, 0, newRoot);
+            linkUpdate(t, p_Pidx, 0, newRoot);
             rv.smallNode = false;
 
             BPtreeNode_free(node);
             BPtreeNode_free(p);
-            pager_free(t, node_pid);
+            pager_free(t, node_Pidx);
             return rv;
         }
 
@@ -438,9 +437,9 @@ ret_flags shinBPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_pid, uint64_
 void BPT_delete(PageTable *t, BPtree* tree, KVpair *kv){
 
     BPtreeNode *Mroot = nodeRead(t, tree->Mroot_id);
-    int root_pid = Mroot->childLinks[0];
+    int root_Pidx = Mroot->childLinks[0];
 
-    shinBPT_deleteR(tree, t, root_pid, tree->Mroot_id, kv);
+    BPT_deleteR(tree, t, root_Pidx, tree->Mroot_id, kv);
     BPtreeNode_free(Mroot);
 }
 
