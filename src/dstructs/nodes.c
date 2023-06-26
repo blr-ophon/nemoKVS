@@ -5,12 +5,6 @@
 #define BTREE_MAX_KEY_SIZE  1000
 #define BTREE_MAX_VAL_SIZE  3000
 
-//TODO: external nodes dont need children links. Wasted space
-
-static void assert_page(BPtreeNode *node){
-    //assert node fits in a page
-}
-
 
 /*
  * Prints a node struct

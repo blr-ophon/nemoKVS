@@ -1,18 +1,5 @@
 #include "delete.h"
 
-//used to update the parent node when a borrow occurs
-KVpair *BPtree_getLeftmostKV(PageTable *t, int subTreeRoot_id){
-    //traverse until reach an external node
-    BPtreeNode *tmp = nodeRead(t, subTreeRoot_id);
-    while(tmp->type != NT_EXT){
-        tmp = nodeRead(t, tmp->childLinks[0]);
-    }
-
-    //find of the key in the node
-    KVpair *rv = BPtreeNode_getKV(tmp, 0);
-    return rv;
-}
-
 
 //Inserts kv at 0 position (prepend) independent of whetever are the keys
 //in the node. Only use is when a borrow from left to right occurs,
@@ -47,35 +34,69 @@ BPtreeNode *BPtreeNode_prepend(BPtreeNode *node, KVpair *kv){
     return prepended;
 }
 
-//pass extreme kv of src to extreme of dst. 
+/*
+ * Swaps KV in (swap_Kidx) position of node with newKV
+ * Frees node and returns node with swapped keys
+ */
+BPtreeNode *BPTNode_swapKey(BPtreeNode *node, int swap_Kidx, KVpair *newKV){
+    KVpair **KVs = malloc(node->nkeys * sizeof(void*));  
+    for(int i = 0; i < node->nkeys; i++){
+        KVs[i] = BPtreeNode_getKV(node, i);
+    }
+    KVpair_removeVal(newKV);
+
+    BPtreeNode *newNode = BPtreeNode_create(node->nkeys, node->type);
+    int i = 0;
+    for(; i < node->nkeys; i++){
+        if(i == swap_Kidx){
+            BPtreeNode_appendKV(newNode, i, newKV);
+        }else{
+            BPtreeNode_appendKV(newNode, i, KVs[i]);
+        }
+        newNode->childLinks[i] = node->childLinks[i];
+    }
+    newNode->childLinks[i] = node->childLinks[i];
+
+    for(int i = 0; i < node->nkeys; i++){
+        KVpair_free(KVs[i]);
+    }
+    free(KVs);
+    BPtreeNode_free(node);
+    return newNode;
+}
+
 //TODO: split this into borrowRight and borrowLeft
-BPtreeNode *BPTNode_borrow(PageTable *t, BPtreeNode *p, int pKV_idx, bool fromRight){
-    int src_pid, dst_pid, dst_idx;
+/*
+ * Pass a key from one child of p to its sibling. p_Kidx is the index of the key where the
+ * borrow occurs.
+ */
+BPtreeNode *BPTNode_borrow(PageTable *t, BPtreeNode *p, int p_Kidx, bool fromRight){
+    int src_Pidx, dst_Pidx, dst_Cidx;
 
     if(fromRight){
-        src_pid = p->childLinks[pKV_idx+1];
-        dst_pid = p->childLinks[pKV_idx];
-        dst_idx = pKV_idx;
+        src_Pidx = p->childLinks[p_Kidx+1];
+        dst_Pidx = p->childLinks[p_Kidx];
+        dst_Cidx = p_Kidx;
     }else{
-        src_pid = p->childLinks[pKV_idx];
-        dst_pid = p->childLinks[pKV_idx+1];
-        dst_idx = pKV_idx+1;
+        src_Pidx = p->childLinks[p_Kidx];
+        dst_Pidx = p->childLinks[p_Kidx+1];
+        dst_Cidx = p_Kidx+1;
     }
-    BPtreeNode *src = nodeRead(t, src_pid);
-    BPtreeNode *dst = nodeRead(t, dst_pid);
+    BPtreeNode *src = nodeRead(t, src_Pidx);
+    BPtreeNode *dst = nodeRead(t, dst_Pidx);
 
     //remove last (or first) kv from src 
     
     KVpair *delKV;                          //deleted key
-    int delChild_pid;                       //child of the deleted key
+    int delChild_Pidx;                       //child of the deleted key
     BPtreeNode *deleted = NULL;
     if(fromRight){  //leftmost kv of src
         delKV = BPtreeNode_getKV(src, 0);
-        delChild_pid = src->childLinks[0];
+        delChild_Pidx = src->childLinks[0];
         deleted = BPtreeNode_shrink(src, 0);
     }else{          //rightmost kv of src
         delKV = BPtreeNode_getKV(src, src->nkeys-1);
-        delChild_pid = src->childLinks[src->nkeys];
+        delChild_Pidx = src->childLinks[src->nkeys];
         deleted = BPtreeNode_shrink(src, src->nkeys);
     }
 
@@ -89,9 +110,9 @@ BPtreeNode *BPTNode_borrow(PageTable *t, BPtreeNode *p, int pKV_idx, bool fromRi
 
     //if the key passed to dst has child, update the first key of dst node
     KVpair *insrtKV = delKV;
-    if(delChild_pid){
+    if(delChild_Pidx){
         if(fromRight){
-            BPtreeNode *tmp = nodeRead(t, delChild_pid);
+            BPtreeNode *tmp = nodeRead(t, delChild_Pidx);
             insrtKV = BPtreeNode_getKV(tmp, 0);
             BPtreeNode_free(tmp);
         }else{
@@ -111,45 +132,45 @@ BPtreeNode *BPTNode_borrow(PageTable *t, BPtreeNode *p, int pKV_idx, bool fromRi
     }
     //insert child at the beginning of dst children
     if(fromRight){
-        inserted->childLinks[inserted->nkeys] = delChild_pid;
+        inserted->childLinks[inserted->nkeys] = delChild_Pidx;
     }else{
-        inserted->childLinks[0] = delChild_pid;
+        inserted->childLinks[0] = delChild_Pidx;
     }
     //(***) special case for trees of degree <= 4
     if(keylessChild_pid){
         inserted->childLinks[!fromRight] = keylessChild_pid;
     }//(***)
 
-    pager_free(t, src_pid);
-    pager_free(t, dst_pid);
-    int inserted_pid = nodeWrite(t, inserted);
-    int deleted_pid = nodeWrite(t, deleted);
+    pager_free(t, src_Pidx);
+    pager_free(t, dst_Pidx);
+    int inserted_Pidx = nodeWrite(t, inserted);
+    int deleted_Pidx = nodeWrite(t, deleted);
 
     //Update the value of the parent node through which the key is passed
     
     //get first leftmost kv to the right of p
     KVpair *pKV;
     if(fromRight){ 
-        pKV = BPtree_getLeftmostKV(t, deleted_pid);
+        pKV = BPtree_getLeftmostKV(t, deleted_Pidx);
     }else{
-        pKV = BPtree_getLeftmostKV(t, inserted_pid);
+        pKV = BPtree_getLeftmostKV(t, inserted_Pidx);
     }
     KVpair_removeVal(pKV);
 
-    BPtreeNode *updated_p = BPTNode_swapKey(p, pKV_idx, pKV);
+    BPtreeNode *updated_p = BPTNode_swapKey(p, p_Kidx, pKV);
 
     //(***) special case for trees of degree <= 4
     if(inserted->nkeys == 1 && fromRight){
         //the key to the left of the updated one must also be updated
         //because the borrowed key became the first (only for degree <= 4)
         KVpair *pKV_2 = BPtreeNode_getKV(inserted, 0);
-        updated_p = BPTNode_swapKey(updated_p, pKV_idx-1, pKV_2);
+        updated_p = BPTNode_swapKey(updated_p, p_Kidx-1, pKV_2);
     }//(***)
 
     //link updated parent to shrinked and inserted node
     int srcSide = fromRight? 1 : -1;
-    updated_p->childLinks[dst_idx] = inserted_pid;
-    updated_p->childLinks[dst_idx + srcSide] = deleted_pid;
+    updated_p->childLinks[dst_Cidx] = inserted_Pidx;
+    updated_p->childLinks[dst_Cidx + srcSide] = deleted_Pidx;
 
     KVpair_free(pKV);
     KVpair_free(delKV);
@@ -157,56 +178,58 @@ BPtreeNode *BPTNode_borrow(PageTable *t, BPtreeNode *p, int pKV_idx, bool fromRi
     return updated_p;
 }
 
-//(C)***Free 2 nodes. Write one merged node. Return shrinked parent in-mem 
-//Merges the inferior and superior child of a kv in a node. Reverse of split
-//kv_idx is the kv index in parent where whose 2 children are trying to merge
+/*
+ * Merges the inferior and superior child of a kv in a node. Reverse of split
+ * kv_idx is the kv index in parent where whose 2 children are trying to merge
+ * Frees 2 nodes. Writes merged node. Return shrinked parent as struct.
+ */
 
-BPtreeNode *BPTNode_merge(PageTable *t, BPtreeNode *node, int kv_idx){
-    int inferior_pid = node->childLinks[kv_idx];
-    int superior_pid = node->childLinks[kv_idx+1];
-    BPtreeNode *inferior = nodeRead(t, inferior_pid);
-    BPtreeNode *superior = nodeRead(t, superior_pid);
+BPtreeNode *BPTNode_merge(PageTable *t, BPtreeNode *node, int merge_Kidx){
+    int inferior_Pidx = node->childLinks[merge_Kidx];
+    int superior_Pidx = node->childLinks[merge_Kidx+1];
+    BPtreeNode *inferior = nodeRead(t, inferior_Pidx);
+    BPtreeNode *superior = nodeRead(t, superior_Pidx);
     bool internal = inferior->type == NT_INT;
 
     //create node from node1, first kv of parent and node2  
     BPtreeNode *merged = BPtreeNode_create(inferior->nkeys + internal + superior->nkeys, inferior->type);
-    int merged_idx = 0; //used to insert kvs and children in 'merged' node
+    int merged_it = 0; //iterator to insert kvs and children in 'merged' node
     //inferior
-    for(int i = 0; i < inferior->nkeys; i++, merged_idx++){
+    for(int i = 0; i < inferior->nkeys; i++, merged_it++){
         KVpair *tmpKV = BPtreeNode_getKV(inferior, i);
-        BPtreeNode_appendKV(merged, merged_idx, tmpKV); 
+        BPtreeNode_appendKV(merged, merged_it, tmpKV); 
         KVpair_free(tmpKV);
-        merged->childLinks[merged_idx] = inferior->childLinks[i];
+        merged->childLinks[merged_it] = inferior->childLinks[i];
     }
 
     //parent
     //append parent kv to merged node if nodes are internal
     if(internal){
         //TODO: delete appended kv from p   (what??)
-        KVpair *pKV = BPtree_getLeftmostKV(t, superior_pid);
-        BPtreeNode_appendKV(merged, merged_idx, pKV); 
-        merged->childLinks[merged_idx] = inferior->childLinks[inferior->nkeys];
-        merged_idx++;
+        KVpair *pKV = BPtree_getLeftmostKV(t, superior_Pidx);
+        BPtreeNode_appendKV(merged, merged_it, pKV); 
+        merged->childLinks[merged_it] = inferior->childLinks[inferior->nkeys];
+        merged_it++;
         KVpair_free(pKV);
     }
 
     //superior
-    for(int i = 0; i < superior->nkeys; i++, merged_idx++){
+    for(int i = 0; i < superior->nkeys; i++, merged_it++){
         KVpair *tmpKV = BPtreeNode_getKV(superior, i);
-        BPtreeNode_appendKV(merged, merged_idx, tmpKV); 
+        BPtreeNode_appendKV(merged, merged_it, tmpKV); 
         KVpair_free(tmpKV);
-        merged->childLinks[merged_idx] = superior->childLinks[i];
+        merged->childLinks[merged_it] = superior->childLinks[i];
     }
-    merged->childLinks[merged_idx] = superior->childLinks[superior->nkeys];
+    merged->childLinks[merged_it] = superior->childLinks[superior->nkeys];
 
     //Free and write
-    pager_free(t, inferior_pid);
-    pager_free(t, superior_pid);
-    int merged_pid = nodeWrite(t, merged);
+    pager_free(t, inferior_Pidx);
+    pager_free(t, superior_Pidx);
+    int merged_Pidx = nodeWrite(t, merged);
 
     //parent loses one child and is shrinked
-    BPtreeNode *shrinked = BPtreeNode_shrink(node, kv_idx+1);
-    shrinked->childLinks[kv_idx] = merged_pid;    //TODO: probably wrong and with special case in 0
+    BPtreeNode *shrinked = BPtreeNode_shrink(node, merge_Kidx+1);
+    shrinked->childLinks[merge_Kidx] = merged_Pidx;    //TODO: probably wrong and with special case in 0
                                                 
     BPtreeNode_free(inferior);
     BPtreeNode_free(superior);
@@ -218,35 +241,6 @@ BPtreeNode *BPTNode_merge(PageTable *t, BPtreeNode *node, int kv_idx){
 static bool isSmallNode(BPtreeNode *node, int minvalue){
     //TODO: use this to check page size instead of number of keys
     return node->nkeys < minvalue;
-}
-
-
-//***must be persistent: 1 free -> 1 (over)write
-BPtreeNode *BPTNode_swapKey(BPtreeNode *node, int kv_idx, KVpair *newKV){
-    KVpair **KVs = malloc(node->nkeys * sizeof(void*));  
-    for(int i = 0; i < node->nkeys; i++){
-        KVs[i] = BPtreeNode_getKV(node, i);
-    }
-    KVpair_removeVal(newKV);
-
-    BPtreeNode *newNode = BPtreeNode_create(node->nkeys, node->type);
-    int i = 0;
-    for(; i < node->nkeys; i++){
-        if(i == kv_idx){
-            BPtreeNode_appendKV(newNode, i, newKV);
-        }else{
-            BPtreeNode_appendKV(newNode, i, KVs[i]);
-        }
-        newNode->childLinks[i] = node->childLinks[i];
-    }
-    newNode->childLinks[i] = node->childLinks[i];
-
-    for(int i = 0; i < node->nkeys; i++){
-        KVpair_free(KVs[i]);
-    }
-    free(KVs);
-    BPtreeNode_free(node);
-    return newNode;
 }
 
 

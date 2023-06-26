@@ -7,8 +7,6 @@
 //Delete a kv pair from a tree
 void BPT_delete(PageTable *t, BPtree* tree, KVpair *kv);
 
-//Returns the leftmost kv pair in a subtree
-KVpair *BPtree_getLeftmostKV(PageTable *t, int subTreeRoot_id);
 
 //Inserts a kv pair with empty children at the beginning of node
 //Used because insert doesn't necessarily do this when comparing 

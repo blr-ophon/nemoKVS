@@ -24,8 +24,11 @@ BPtree *BPtree_create(PageTable *t, uint8_t degree);
 void BPtree_free(BPtree *ptr);
 
 void BPtree_insert(PageTable *t, BPtree *tree, KVpair *kv);
-BPtreeNode *BPtree_search(PageTable *t, BPtree *tree, KVpair *kv, int *idx);
+BPtreeNode *BPtree_search(PageTable *t, BPtree *tree, KVpair *kv, int *ret_idx);
 
 int NextChildIDX(BPtreeNode *node, KVpair *kv);
+
+//Returns the leftmost kv pair in a subtree
+KVpair *BPtree_getLeftmostKV(PageTable *t, int subTreeRoot_id);
 
 #endif

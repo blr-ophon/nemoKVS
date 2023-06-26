@@ -56,7 +56,7 @@ int main(void){
     //a MROOT_PAGE_ID 1
     BPtree *tree = BPtree_create(db->table, 6);
 
-    DBtests_all(db->table, tree, 100);
+    DBtests_all(db->table, tree, 1000);
 
     //uint8_t data1[7] = {1,2,3,4,5,6,7};
     //DB_Insert(db, "testkey1", data1, 7);
