@@ -5,6 +5,19 @@
 //TODO: make an optimization table with the number of reads and writes from nodes for each function,
 //then try to reduce them.
 
+
+/*
+ * updates childLink[child_id] to newLink and overwrites node
+ * node_pid is the node to be updated. Child_id is the childLink to be updated
+ * and newLink is the new value of the child.
+ */
+void linkUpdate(PageTable *t, uint64_t Pidx, int Cidx, uint64_t newLink){
+    BPtreeNode *node = nodeRead(t, Pidx);
+    node->childLinks[Cidx] = newLink;
+    nodeOverwrite(t, Pidx, node);
+    BPtreeNode_free(node);
+}
+
 /*
  *used to update the parent node when a borrow occurs in deletion
  */

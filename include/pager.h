@@ -23,5 +23,6 @@ PageTable *pager_init(int fd);
 void pager_expand(PageTable *table);
 int pager_alloc(PageTable *table);
 void pager_free(PageTable *table, uint64_t pid);
+void pager_free(PageTable *table, uint64_t Pidx);
 
 #endif

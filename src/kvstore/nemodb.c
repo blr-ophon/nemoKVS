@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include "nemodb.h"
-#include "delete.h"
 
 #define MAX_PATHNAME 64
 #define MAX_KEYNAME 64

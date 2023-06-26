@@ -1,7 +1,6 @@
 #ifndef DBTESTS_H
 #define DBTESTS_H
 #include "bptree.h"
-#include "delete.h"
 
 void DBtests_all(PageTable *t,BPtree *tree, int n);
 

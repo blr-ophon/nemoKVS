@@ -77,14 +77,14 @@ int pager_alloc(PageTable *table){
     return table->len -1;
 }
 
-void pager_free(PageTable *table, uint64_t pid){
-    assert(pid >= 2);
+void pager_free(PageTable *table, uint64_t Pidx){
+    assert(Pidx >= 2);
 
     //mark as free in table
-    table->pageMap[pid +4] = 0;
+    table->pageMap[Pidx +4] = 0;
 
     //fill with zeroes
     uint8_t *zeroes = calloc(1, getpagesize());
-    memcpy(table->entries[pid], zeroes, getpagesize());
+    memcpy(table->entries[Pidx], zeroes, getpagesize());
     free(zeroes);
 }

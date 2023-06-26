@@ -25,10 +25,12 @@ void BPtree_free(BPtree *ptr);
 
 void BPtree_insert(PageTable *t, BPtree *tree, KVpair *kv);
 BPtreeNode *BPtree_search(PageTable *t, BPtree *tree, KVpair *kv, int *ret_idx);
+void BPT_delete(PageTable *t, BPtree* tree, KVpair *kv);
 
 int NextChildIDX(BPtreeNode *node, KVpair *kv);
 
 //Returns the leftmost kv pair in a subtree
 KVpair *BPtree_getLeftmostKV(PageTable *t, int subTreeRoot_id);
+void linkUpdate(PageTable *t, uint64_t Pidx, int Cidx, uint64_t newLink);
 
 #endif
