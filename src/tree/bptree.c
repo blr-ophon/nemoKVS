@@ -138,6 +138,7 @@ static BPtreeNode *BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_Pidx
         BPtreeNode *splitted = BPtreeNode_split(t, node);
         node_free(t, node_Pidx);
         spl = splitted;
+        BPtreeNode_free(p);
 
     }else if(tryWrite){ //insertion or merging occured, no split necessary
         //free old node. write new node

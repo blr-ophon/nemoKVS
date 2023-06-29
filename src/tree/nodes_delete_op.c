@@ -171,6 +171,7 @@ BPtreeNode *BPTNode_merge(PageTable *t, BPtreeNode *node, int merge_Kidx){
     BPtreeNode *shrinked = BPtreeNode_shrink(node, merge_Kidx+1);
     shrinked->childLinks[merge_Kidx] = merged_Pidx;    //TODO: probably wrong and with special case in 0
                                                 
+    BPtreeNode_free(merged);
     BPtreeNode_free(inferior);
     BPtreeNode_free(superior);
     //BPtreeNode_free(node);
