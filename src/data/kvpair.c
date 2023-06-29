@@ -92,8 +92,6 @@ void KVpair_removeVal(KVpair *kv){
     }
 }
 
-
-
 //positive if kv1 > kv2 | 0 if kv1 == kv2 | negative if kv1 < kv2
 int KVpair_compare(KVpair *kv1, KVpair *kv2){
     return atol(kv1->key) - atol(kv2->key);

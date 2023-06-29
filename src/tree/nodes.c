@@ -106,18 +106,11 @@ void BPtreeNode_appendKV(BPtreeNode *node, int Kidx, KVpair *kv){
     uint8_t *bytestream = KVpair_encode(kv);
     memcpy(&node->key_values[offset], bytestream, kv_size);
 
-    if(Kidx == 0){
-        node->keyOffsets[Kidx] = 0;
-    }else{
-        node->keyOffsets[Kidx] = node->keyOffsets[Kidx-1] + kv_size;
-    }
-
-    /*
-    //appends offset for the next key
-    if(Kidx + 1 <= node->nkeys){
+    //appends offset for the NEXT key
+    //--This means that a node always has more offsets(1 more) than keys
+    if(Kidx + 1 < node->nkeys){
         node->keyOffsets[Kidx+1] = node->keyOffsets[Kidx] + kv_size;
     }
-    */
 
     free(bytestream);
 }
