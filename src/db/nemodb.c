@@ -55,7 +55,7 @@ int main(void){
     //a MROOT_PAGE_ID 1
     BPtree *tree = BPtree_create(db->table, 6);
 
-    DBtests_all(db->table, tree, 10);
+    DBtests_all(db->table, tree, 100);
 
     free(tree);
     DB_free(db);
