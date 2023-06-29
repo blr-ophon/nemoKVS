@@ -6,6 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+//NODE
+//| type | nkeys |  children  |   offsets  | key-values
+//|  2B  |   2B  | nkeys * 8B | nkeys * 2B | ...
+//
+//KEY-VALUE
+//| klen | vlen |  key |  value  | 
+//|  4B  |  4B  | klen |  vlen   | 
+
 typedef struct{
     uint32_t klen;
     uint32_t vlen;

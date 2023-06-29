@@ -55,30 +55,10 @@ int main(void){
     //a MROOT_PAGE_ID 1
     BPtree *tree = BPtree_create(db->table, 6);
 
-    DBtests_all(db->table, tree, 100);
+    DBtests_all(db->table, tree, 10);
 
-    //uint8_t data1[7] = {1,2,3,4,5,6,7};
-    //DB_Insert(db, "testkey1", data1, 7);
-
-    //uint8_t data2[7] = {7,6,5,4,3,2,1};
-    //DB_Insert(db, "testkey2", data2, 7);
-
-
-    //Record *rec = DB_Read(db, "testkey1");
-    //for(uint32_t i = 0; i < rec->header.Vsize; i++){
-    //    printf("%d ", rec->value[i]);
-    //}
-    //printf("\n"); 
-
-    //rec = DB_Read(db, "testkey2");
-    //for(uint32_t i = 0; i < rec->header.Vsize; i++){
-    //    printf("%d ", rec->value[i]);
-    //}
-    //printf("\n"); 
-
-
-    //Record_free(rec);
     DB_free(db);
+
     return 0;
 }
 
@@ -109,7 +89,7 @@ void DB_create(char *name){
     chmod(dbfile, S_IRUSR | S_IWUSR);
     
     //create page table 
-    uint8_t *emptyPages = calloc(1, getpagesize());
+    uint8_t *emptyPages = calloc(2, getpagesize());
 
     uint32_t page_num = 2;  //page 0 and 1
     memcpy(&emptyPages[0], &page_num, sizeof(uint32_t));
@@ -162,15 +142,6 @@ Database *DB_load(char *dbname){
     database->table = pager_init(fd);
 
     return database;
-}
-
-void DB_merge(Database *db){
-    //create new temporary indexfile
-    //Load indexfile to hashtable
-    //Store from hashtable to temp indexfile
-    //Change temp indexfile name to overwrite previous one
-    //(what about datafile)
-    //Updata db datafile handlers
 }
 
 void DB_free(Database *db){

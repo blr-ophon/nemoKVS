@@ -12,8 +12,13 @@
 #include "pager.h"
 
 
+//NODE
 //| type | nkeys |  children  |   offsets  | key-values
 //|  2B  |   2B  | nkeys * 8B | nkeys * 2B | ...
+//
+//KEY-VALUE
+//| klen | vlen |  key |  value  | 
+//|  2B  |  2B  | klen |  vlen   | 
 
 //TODO:for external memory
 //-children becomes an array of pointers to disk pages (uint64_t)

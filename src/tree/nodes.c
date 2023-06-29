@@ -87,6 +87,7 @@ KVpair *BPtreeNode_getKV(BPtreeNode *node, int Kidx){
 
 /*
  * Appends a kv to a node, ignoring comparisons and childLinks
+ * Expects an empty node, created with it's maximum size already
  */
 void BPtreeNode_appendKV(BPtreeNode *node, int Kidx, KVpair *kv){
     //assert(node->type == NT_EXT);
@@ -105,13 +106,22 @@ void BPtreeNode_appendKV(BPtreeNode *node, int Kidx, KVpair *kv){
     uint8_t *bytestream = KVpair_encode(kv);
     memcpy(&node->key_values[offset], bytestream, kv_size);
 
+    if(Kidx == 0){
+        node->keyOffsets[Kidx] = 0;
+    }else{
+        node->keyOffsets[Kidx] = node->keyOffsets[Kidx-1] + kv_size;
+    }
+
+    /*
     //appends offset for the next key
     if(Kidx + 1 <= node->nkeys){
         node->keyOffsets[Kidx+1] = node->keyOffsets[Kidx] + kv_size;
     }
+    */
 
     free(bytestream);
 }
+
 
 /*
  * Returns size of a node in bytes

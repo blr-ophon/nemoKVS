@@ -1,6 +1,8 @@
 CC = gcc
 OPT = -O0
-CFLAGS = -std=gnu99 -g -Wall -Wextra -pedantic $(OPT)
+CFLAGS = -std=gnu99 -g -Wall -Wextra -pedantic $(OPT) 
+#CFLAGS = -std=gnu99 -g -Wall -Wextra -pedantic $(OPT) -fsanitize=address -fno-omit-frame-pointer
+
 
 INCLUDES= -I./include 
 

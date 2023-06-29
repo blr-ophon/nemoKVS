@@ -42,23 +42,24 @@ void KVpair_free(KVpair *ptr){
 
 KVpair *KVpair_decode(uint8_t *bytestream){ 
     if(!bytestream){
-        printf("aqui\n");
         exit(1);
     }
+    uint8_t *offset = bytestream;
+
     uint32_t klen;
-    memcpy(&klen, bytestream, sizeof(uint32_t));
-    bytestream += sizeof(uint32_t);
+    memcpy(&klen, offset, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
 
     uint32_t vlen;
-    memcpy(&vlen, bytestream, sizeof(uint32_t));
-    bytestream += sizeof(uint32_t);
+    memcpy(&vlen, offset, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
 
     char *key = calloc(1, klen); 
-    memcpy(key, bytestream, klen);
-    bytestream += klen;
+    memcpy(key, offset, klen);
+    offset += klen;
 
     uint8_t *val= calloc(1, vlen); 
-    memcpy(val, bytestream, vlen);
+    memcpy(val, offset, vlen);
 
     KVpair *kv = KVpair_create(klen, vlen, key, val);
     free(key);
