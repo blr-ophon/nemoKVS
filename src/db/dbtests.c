@@ -5,11 +5,11 @@
 
 void DBtests_all(PageTable *t,BPtree *tree, int n){
     srand(time(NULL));
+
     /*
     DBtests_custom(t, tree);
     */
     DBtests_inorder(t, tree, n);
-    /*
     DBtests_revorder(t, tree, n);
     DBtests_randorder(t, tree, n);
     for(int i = 0; i < 100; i++){
@@ -18,7 +18,6 @@ void DBtests_all(PageTable *t,BPtree *tree, int n){
             break;
         }
     }
-    */
 }
 
 //ERROR: degree 4, n = 10
@@ -87,9 +86,11 @@ int DBtests_search(PageTable *t, BPtree *tree, KVpair **KVs, int n){
     //try search
     int search_kv_n = 0;
     for(i = 0; i < n; i++){
-        if(BPtree_search(t,tree, KVs[i], NULL)){
+        BPtreeNode *tmp = BPtree_search(t, tree, KVs[i], NULL);
+        if(tmp){
             search_kv_n++;
             //printf("KV[%d] found\n", i);
+            BPtreeNode_free(tmp);
         }
     }
     printf("Search complete: ");

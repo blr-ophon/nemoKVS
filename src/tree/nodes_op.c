@@ -7,6 +7,7 @@ int BPtreeNode_search(BPtreeNode* node, KVpair *kv){
     for(int i = 0; i < node->nkeys; i++){
         KVpair *crntKV = BPtreeNode_getKV(node, i);
         if(KVpair_compare(kv, crntKV) == 0){
+            KVpair_free(crntKV);
             return i;
         }
         KVpair_free(crntKV);

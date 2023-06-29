@@ -53,10 +53,11 @@ int main(void){
     //tree struct is kinda useless, degree wont be a thing once
     //node pages are used instead and Mroot id is always 1. create
     //a MROOT_PAGE_ID 1
-    BPtree *tree = BPtree_create(db->table, 20);
+    BPtree *tree = BPtree_create(db->table, 6);
 
-    DBtests_all(db->table, tree, 100);
+    DBtests_all(db->table, tree, 50);
 
+    free(tree);
     DB_free(db);
 
     return 0;
@@ -145,7 +146,10 @@ Database *DB_load(char *dbname){
 }
 
 void DB_free(Database *db){
-    //TODO: free table
+    //TODO: free table / unmap maps
+    free(db->table->entries);
+    free(db->table);
+
     free(db->name);
     free(db->path);
     free(db);

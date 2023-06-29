@@ -10,15 +10,15 @@ static bool isSmallNode(BPtreeNode *node, int minvalue){
 typedef struct{
     bool smallNode;         //returned when a node is too small and must borrow or merge
     KVpair *leftmostKV;     //returned when a kv pair must be updated in one or more parents
-}ret_flags;
+}del_rv;
 
-ret_flags BPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_Pidx, uint64_t p_Pidx, KVpair *kv){
+del_rv BPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_Pidx, uint64_t p_Pidx, KVpair *kv){
     BPtreeNode *node = nodeRead(t, node_Pidx);
     BPtreeNode *p = nodeRead(t, p_Pidx);
     int NDtoNext_Cidx = NextChildIDX(node,kv);
     //TODO: unupdated NDtoNext could be causing problems
 
-    ret_flags rv;
+    del_rv rv;
     rv.smallNode = 0;
     rv.leftmostKV = NULL;
 
@@ -201,7 +201,9 @@ void BPT_delete(PageTable *t, BPtree* tree, KVpair *kv){
     BPtreeNode *Mroot = nodeRead(t, tree->Mroot_id);
     int root_Pidx = Mroot->childLinks[0];
 
-    BPT_deleteR(tree, t, root_Pidx, tree->Mroot_id, kv);
+    del_rv rv = BPT_deleteR(tree, t, root_Pidx, tree->Mroot_id, kv);
+    if(rv.leftmostKV) KVpair_free(rv.leftmostKV); 
+
     BPtreeNode_free(Mroot);
 }
 

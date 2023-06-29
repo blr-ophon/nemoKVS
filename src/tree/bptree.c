@@ -59,6 +59,7 @@ BPtree *BPtree_create(PageTable *t, uint8_t degree){
     nodeOverwrite(t, 1, Mroot);
     rv->Mroot_id = 1;
 
+    BPtreeNode_free(Mroot);
     return rv;
 }
 
@@ -85,6 +86,7 @@ int NextChildIDX(BPtreeNode *node, KVpair *kv){
     for(int i = 0; i < node->nkeys; i++){
         KVpair *crntKV = BPtreeNode_getKV(node, i);
         if(KVpair_compare(kv, crntKV) < 0){
+            KVpair_free(crntKV);
             return i;
         }
         KVpair_free(crntKV);
@@ -143,6 +145,8 @@ static BPtreeNode *BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_Pidx
         spl = NULL;
     }
 
+    //BPtreeNode_free(node);
+    //BPtreeNode_free(p);
     return spl;
 }
 
@@ -156,6 +160,9 @@ void BPtree_insert(PageTable *t, BPtree *tree, KVpair *kv){
         BPtreeNode_appendKV(root, 0,  kv);
         root_Pidx = nodeWrite(t, root);
         linkUpdate(t, tree->Mroot_id, 0, root_Pidx);
+
+        BPtreeNode_free(root);
+        BPtreeNode_free(masterRoot);
         return;
     }
 
@@ -168,13 +175,18 @@ void BPtree_insert(PageTable *t, BPtree *tree, KVpair *kv){
         //update mroot to link to new root
         linkUpdate(t, 1, 0, newNode);
     }
+
+    BPtreeNode_free(masterRoot);
 }
 
 //returns node pointer and the id of the key in idx
 BPtreeNode *BPtree_search(PageTable *t, BPtree *tree, KVpair *kv, int *ret_Kidx){
     //traverse until reach an external node
     BPtreeNode *mroot = nodeRead(t, tree->Mroot_id);
-    if(!mroot->childLinks[0]) return NULL;
+    if(!mroot->childLinks[0]){ 
+        BPtreeNode_free(mroot);
+        return NULL;
+    }
     
     BPtreeNode *tmp = nodeRead(t, mroot->childLinks[0]);
     while(tmp->type != NT_EXT){
@@ -184,8 +196,13 @@ BPtreeNode *BPtree_search(PageTable *t, BPtree *tree, KVpair *kv, int *ret_Kidx)
 
     //find of the key in the node
     int rv = BPtreeNode_search(tmp, kv);
-    if(rv < 0) return NULL;
+    if(rv < 0){
+        BPtreeNode_free(mroot);
+        BPtreeNode_free(tmp);
+        return NULL;
+    }
     if(ret_Kidx) *ret_Kidx = rv;
 
+    BPtreeNode_free(mroot);
     return tmp;
 }

@@ -71,10 +71,13 @@ BPtreeNode *BPtreeNode_create(uint8_t nkeys, int type){
 
 
 void BPtreeNode_free(BPtreeNode *node){
-    free(node->childLinks);
-    free(node->keyOffsets);
-    free(node->key_values);
-    free(node);
+    if(node){
+        free(node->childLinks);
+        free(node->keyOffsets);
+        free(node->key_values);
+        free(node);
+        node = NULL;
+    }
 }
 
 KVpair *BPtreeNode_getKV(BPtreeNode *node, int Kidx){

@@ -77,6 +77,10 @@ int pager_alloc(PageTable *table){
     return table->len -1;
 }
 
+/*
+ * Free an entry in the table
+ * TODO: change name and create a pager_free that frees memory allocated by pager
+ */
 void pager_free(PageTable *table, uint64_t Pidx){
     assert(Pidx >= 2);
 
