@@ -94,7 +94,20 @@ void KVpair_removeVal(KVpair *kv){
 
 //positive if kv1 > kv2 | 0 if kv1 == kv2 | negative if kv1 < kv2
 int KVpair_compare(KVpair *kv1, KVpair *kv2){
-    return atol(kv1->key) - atol(kv2->key);
+    /*
+     * Using atol in key directly without converting to null termina-
+     * ted string causes heap corruption in atol
+     */
+    
+    char *key1 = calloc(1, kv1->klen +1);
+    char *key2 = calloc(1, kv2->klen +1);
+    memcpy(key1, kv1->key, kv1->klen);
+    memcpy(key2, kv2->key, kv2->klen);
+
+    int rv = atol(key1) - atol(key2);
+    free(key1);
+    free(key2);
+    return rv;
 }
 
 size_t KVpair_getSize(KVpair *ptr){
