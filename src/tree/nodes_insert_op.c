@@ -100,6 +100,7 @@ BPtreeNode *BPtreeNode_mergeSplitted(BPtreeNode *node, BPtreeNode *splitted, int
         KVpair_free(KVs[i]);
     }
     free(KVs);
+    KVpair_free(newKV);
     BPtreeNode_free(node);
     BPtreeNode_free(splitted);
     return merged;

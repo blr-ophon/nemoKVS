@@ -150,6 +150,9 @@ static BPtreeNode *BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_Pidx
         spl = NULL;
         BPtreeNode_free(node);
         BPtreeNode_free(p);
+    }else{
+        BPtreeNode_free(node);
+        BPtreeNode_free(p);
     }
 
     return spl;
@@ -197,7 +200,10 @@ BPtreeNode *BPtree_search(PageTable *t, BPtree *tree, KVpair *kv, int *ret_Kidx)
     BPtreeNode *tmp = nodeRead(t, mroot->childLinks[0]);
     while(tmp->type != NT_EXT){
         int next_Cidx = NextChildIDX(tmp, kv);
-        tmp = nodeRead(t, tmp->childLinks[next_Cidx]);
+        uint64_t next_Pidx = tmp->childLinks[next_Cidx];
+
+        BPtreeNode_free(tmp);
+        tmp = nodeRead(t, next_Pidx);
     }
 
     //find of the key in the node
