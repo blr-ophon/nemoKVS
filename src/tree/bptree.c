@@ -135,7 +135,8 @@ static BPtreeNode *BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_Pidx
         BPtreeNode *splitted = BPtreeNode_split(t, node);
         node_free(t, node_Pidx);
         spl = splitted;
-    }else if(tryWrite){
+
+    }else if(tryWrite){ //insertion or merging occured, no split necessary
         //free old node. write new node
         node_free(t, node_Pidx);
         uint64_t newNode = nodeWrite(t, node);
@@ -143,6 +144,8 @@ static BPtreeNode *BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_Pidx
         int ptoc_Cidx = NextChildIDX(p, kv);
         linkUpdate(t, p_Pidx, ptoc_Cidx, newNode);
         spl = NULL;
+        BPtreeNode_free(node);
+        BPtreeNode_free(p);
     }
 
     return spl;
