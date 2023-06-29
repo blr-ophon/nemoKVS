@@ -32,6 +32,7 @@ KVpair *BPtree_getLeftmostKV(PageTable *t, int subTreeRoot_Pidx){
 
     //find of the key in the node
     KVpair *rv = BPtreeNode_getKV(tmp, 0);
+    BPtreeNode_free(tmp);
     return rv;
 }
 

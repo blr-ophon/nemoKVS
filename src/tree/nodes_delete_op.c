@@ -101,12 +101,16 @@ BPtreeNode *BPTNode_borrow(PageTable *t, BPtreeNode *p, int p_Kidx, bool fromRig
         //because the borrowed key became the first (only for degree <= 4)
         KVpair *pKV_2 = BPtreeNode_getKV(inserted, 0);
         updated_p = BPTNode_swapKey(updated_p, p_Kidx-1, pKV_2);
+        KVpair_free(pKV_2);
     }//(***)
 
     //link updated parent to shrinked and inserted node
     int srcSide = fromRight? 1 : -1;
     updated_p->childLinks[dst_Cidx] = inserted_Pidx;
     updated_p->childLinks[dst_Cidx + srcSide] = deleted_Pidx;
+
+    BPtreeNode_free(deleted);
+    BPtreeNode_free(inserted);
 
     KVpair_free(pKV);
     KVpair_free(delKV);

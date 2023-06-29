@@ -10,7 +10,6 @@ void DBtests_all(PageTable *t,BPtree *tree, int n){
     DBtests_custom(t, tree);
     */
     DBtests_inorder(t, tree, n);
-    /*
     DBtests_revorder(t, tree, n);
     DBtests_randorder(t, tree, n);
     for(int i = 0; i < 100; i++){
@@ -19,7 +18,6 @@ void DBtests_all(PageTable *t,BPtree *tree, int n){
             break;
         }
     }
-    */
 }
 
 //ERROR: degree 4, n = 10
