@@ -111,6 +111,7 @@ del_rv BPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_Pidx, uint64_t p_Pi
 
                 if(NDtoNext_Cidx == 1){  //borrow occurs in leftmost KV of node
                     //1 because for borrow left in kv 0, child 1 asks for a kv in child 0
+                    KVpair_free(rv.leftmostKV);
                     rv.leftmostKV = BPtree_getLeftmostKV(t, node_Pidx);
                 }
             }
@@ -136,6 +137,7 @@ del_rv BPT_deleteR(BPtree *tree, PageTable *t, uint64_t node_Pidx, uint64_t p_Pi
                 if(NDtoNext_Cidx == 0){  //borrow occurs in leftmost KV of node 
                     //0 because for borrow right in kv 0, child 0 asks for a kv in child 1
                     //rv.leftmostKV = BPtreeNode_getKV(updated, 0);
+                    KVpair_free(rv.leftmostKV);
                     rv.leftmostKV = BPtree_getLeftmostKV(t, node_Pidx);
                 }
             }

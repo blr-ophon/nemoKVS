@@ -25,7 +25,9 @@ KVpair *BPtree_getLeftmostKV(PageTable *t, int subTreeRoot_Pidx){
     //traverse until reach an external node
     BPtreeNode *tmp = nodeRead(t, subTreeRoot_Pidx);
     while(tmp->type != NT_EXT){
-        tmp = nodeRead(t, tmp->childLinks[0]);
+        uint64_t next_Pidx = tmp->childLinks[0];
+        BPtreeNode_free(tmp);
+        tmp = nodeRead(t, next_Pidx);
     }
 
     //find of the key in the node
@@ -175,6 +177,7 @@ void BPtree_insert(PageTable *t, BPtree *tree, KVpair *kv){
         uint64_t newNode = nodeWrite(t, splitted);
         //update mroot to link to new root
         linkUpdate(t, 1, 0, newNode);
+        BPtreeNode_free(splitted);
     }
 
     BPtreeNode_free(masterRoot);
