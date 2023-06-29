@@ -145,8 +145,6 @@ static BPtreeNode *BPtree_insertR(BPtree *tree, PageTable *t, uint64_t node_Pidx
         spl = NULL;
     }
 
-    //BPtreeNode_free(node);
-    //BPtreeNode_free(p);
     return spl;
 }
 
